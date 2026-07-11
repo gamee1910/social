@@ -1,12 +1,15 @@
 package main
 
 import (
+	"database/sql"
 	"log"
 
 	"github.com/gamee1910/social/internal/db"
 	"github.com/gamee1910/social/internal/env"
 	"github.com/gamee1910/social/internal/store"
 )
+
+const version = "0.0.1"
 
 func main() {
 	cfg := applicationConfig{
@@ -17,9 +20,10 @@ func main() {
 			maxIdelConnection: env.GetInt("DB_MAX_IDEL_CONS", 30),
 			maxIdelTime:       env.GetString("DB_MAX_IDEL_TIME", "15m"),
 		},
+		env: env.GetString("ENV", "development"),
 	}
 
-	db, err := db.New(
+	database, err := db.New(
 		cfg.databaseConfig.addr,
 		cfg.databaseConfig.maxOpenConnection,
 		cfg.databaseConfig.maxIdelConnection,
@@ -30,14 +34,18 @@ func main() {
 		log.Panic(err)
 	}
 
-	defer db.Close()
-	log.Println("database connection pool established")
+	defer func(database *sql.DB) {
+		err := database.Close()
+		if err != nil {
+			log.Println("database connection pool established")
+		}
+	}(database)
 
-	store := store.NewStorage(db)
+	storage := store.NewStorage(database)
 
 	app := &application{
 		config: cfg,
-		store:  store,
+		store:  storage,
 	}
 
 	mux := app.mount()

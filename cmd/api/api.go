@@ -18,6 +18,7 @@ type application struct {
 type applicationConfig struct {
 	addr           string
 	databaseConfig databaseConfig
+	env            string
 }
 
 type databaseConfig struct {
