@@ -4,24 +4,15 @@ import (
 	"context"
 	"database/sql"
 
+	"github.com/gamee1910/social/internal/domain"
 	"github.com/lib/pq"
 )
-
-type Post struct {
-	ID        int64    `json:"id"`
-	Content   string   `json:"content"`
-	Title     string   `json:"title"`
-	UserId    int64    `json:"user_id"`
-	Tags      []string `json:"tags"`
-	CreatedAt string   `json:"created_at"`
-	UpdatedAt string   `json:"updated_at"`
-}
 
 type PostsStore struct {
 	db *sql.DB
 }
 
-func (store *PostsStore) Create(ctx context.Context, post *Post) error {
+func (store *PostsStore) Create(ctx context.Context, post *domain.Post) error {
 	query :=
 		`
 		INSERT INTO posts(content, title, user_id, tags)
