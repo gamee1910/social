@@ -8,8 +8,12 @@ Before getting started, ensure you have the following installed:
 
 - **Go** (1.21 or higher)
 - **Git**
+- **Make**
 - **direnv** - for environment variable management
 - **air** - for hot-reloading during development
+- **golang-migrate** - for database migrations
+
+---
 
 ## Installation & Setup
 
@@ -20,33 +24,36 @@ git clone <repository-url>
 cd social
 ```
 
-Or download and extract the ZIP folder:
+Or download and extract the ZIP archive:
 
 ```bash
 unzip social.zip
 cd social
 ```
 
+---
+
 ### 2. Install Development Tools
 
 #### Install direnv
 
-Follow the official guide: https://direnv.net/docs/installation.html
+Official documentation:
 
-**macOS:**
+https://direnv.net/docs/installation.html
+
+**macOS**
+
 ```bash
 brew install direnv
 ```
 
-**Linux (Ubuntu/Debian):**
+**Ubuntu / Debian**
+
 ```bash
-sudo apt-get install direnv
+sudo apt install direnv
 ```
 
-**Windows (with WSL):**
-```bash
-sudo apt-get install direnv
-```
+---
 
 #### Install air (Hot Reload)
 
@@ -54,28 +61,45 @@ sudo apt-get install direnv
 go install github.com/cosmtrek/air@latest
 ```
 
+Verify:
+
+```bash
+air -v
+```
+
+---
+
+#### Install golang-migrate
+
+Download the latest binary from:
+
+https://github.com/golang-migrate/migrate/releases
+
+Or install with Go:
+
+```bash
+go install -tags "postgres" github.com/golang-migrate/migrate/v4/cmd/migrate@latest
+```
+
+Verify:
+
+```bash
+migrate -version
+```
+
+---
+
 ### 3. Configure Environment Variables
 
-**Enable direnv in your shell:**
-
-Open a new terminal in the project directory and run:
+Enable `direnv` inside the project:
 
 ```bash
 direnv allow
 ```
 
-This will load environment variables from `.envrc` file.
+Edit the `.envrc` file to match your local environment.
 
-**Edit `.envrc` for your environment:**
-
-```bash
-# Edit the .envrc file
-nano .envrc
-# or
-vim .envrc
-```
-
-Add your configuration variables (example):
+Example:
 
 ```bash
 export DB_HOST=localhost
@@ -83,11 +107,18 @@ export DB_PORT=5432
 export DB_USER=postgres
 export DB_PASSWORD=your_password
 export DB_NAME=social_db
+
 export SERVER_PORT=8080
 export LOG_LEVEL=debug
 ```
 
-After editing, save and direnv will automatically reload the variables.
+Whenever `.envrc` changes, run:
+
+```bash
+direnv allow
+```
+
+---
 
 ### 4. Install Dependencies
 
@@ -96,14 +127,118 @@ go mod download
 go mod tidy
 ```
 
-## Development
+---
 
-### Running the Application with Hot Reload
+## Makefile
 
-Start the development server with automatic restart on code changes:
+This project provides a `Makefile` to simplify common development tasks.
+
+### Show Available Commands
 
 ```bash
-air
+make help
 ```
 
-The application will start and watch for file changes in your source code. Any modifications will trigger a rebuild and restart.
+### Run the Application
+
+```bash
+make run
+```
+
+### Run with Hot Reload
+
+```bash
+make watch
+```
+
+### Build
+
+```bash
+make build
+```
+
+### Run Tests
+
+```bash
+make test
+```
+
+---
+
+## Database Migrations
+
+### Create a Migration
+
+```bash
+make migrate-create name=create_users_table
+```
+
+This creates:
+
+```
+migrations/
+├── 000001_create_users_table.up.sql
+└── 000001_create_users_table.down.sql
+```
+
+---
+
+### Apply All Migrations
+
+```bash
+make migrate-up
+```
+
+---
+
+### Roll Back All Migrations
+
+```bash
+make migrate-down
+```
+
+---
+
+### Roll Back One Migration
+
+```bash
+make migrate-down-one
+```
+
+---
+
+### Check Current Migration Version
+
+```bash
+make migrate-version
+```
+
+---
+
+### Force a Migration Version
+
+If a migration fails and leaves the database in a dirty state:
+
+```bash
+make migrate-force version=3
+```
+
+Replace `3` with the migration version you want to force.
+
+---
+
+## Development
+
+Run the development server with hot reload:
+
+```bash
+make watch
+```
+
+Or without hot reload:
+
+```bash
+make run
+```
+
+The server will automatically reload whenever source files change when using `make watch`.
