@@ -11,12 +11,20 @@ import (
 )
 
 type application struct {
-	config config
+	config applicationConfig
 	store  store.Storage
 }
 
-type config struct {
-	addr string
+type applicationConfig struct {
+	addr           string
+	databaseConfig databaseConfig
+}
+
+type databaseConfig struct {
+	addr              string
+	maxOpenConnection int
+	maxIdelConnection int
+	maxIdelTime       string
 }
 
 func (app *application) mount() *chi.Mux {
