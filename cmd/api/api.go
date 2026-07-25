@@ -36,6 +36,16 @@ func (app *application) mount() *chi.Mux {
 
 	r.Route("/v1", func(r chi.Router) {
 		r.Get("/health", app.healthCheckHandler)
+
+		//v1/posts/
+		r.Route("/posts", func(r chi.Router) {
+			r.Post("/", app.createPostHandler)
+			r.Get("/", app.getAllPostHandler)
+			r.Route("/{postId}", func(r chi.Router) {
+				r.Get("/", app.getPostHandler)
+			})
+
+		})
 	})
 
 	return r
@@ -43,7 +53,7 @@ func (app *application) mount() *chi.Mux {
 
 func (app *application) run(mux http.Handler) error {
 
-	srv := &http.Server{
+	server := &http.Server{
 		Addr:         app.config.addr,
 		Handler:      mux,
 		WriteTimeout: time.Second * 30,
@@ -53,5 +63,5 @@ func (app *application) run(mux http.Handler) error {
 
 	log.Printf("server has started at %s", app.config.addr)
 
-	return srv.ListenAndServe()
+	return server.ListenAndServe()
 }
