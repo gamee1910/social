@@ -13,22 +13,25 @@ var (
 )
 
 type Storage struct {
-	Posts PostStore
-	Users UserStore
-}
+	Users interface {
+		Create(ctx context.Context, user *domain.User) error
+	}
 
-type PostStore interface {
-	Create(context.Context, *domain.Post) error
-	GetById(context.Context, int64) (*domain.Post, error)
-	GetAll(context.Context) ([]*domain.Post, error)
-}
-type UserStore interface {
-	Create(context.Context, *domain.User) error
+	Posts interface {
+		Create(ctx context.Context, post *domain.Post) error
+		GetById(ctx context.Context, postId int64) (*domain.Post, error)
+		GetAll(ctx context.Context) ([]*domain.Post, error)
+	}
+
+	Comments interface {
+		GetByPostId(ctx context.Context, postId int64) ([]domain.Comment, error)
+	}
 }
 
 func NewStorage(db *sql.DB) Storage {
 	return Storage{
-		Posts: &PostsStore{db},
-		Users: &UsersStore{db},
+		Posts:    &PostsStore{db},
+		Users:    &UsersStore{db},
+		Comments: &CommentsStore{db},
 	}
 }
