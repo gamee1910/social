@@ -19,3 +19,8 @@ func (app *application) notFoundError(response http.ResponseWriter, request *htt
 	log.Printf("not found error: [%s] - path: [%s] - error: [%s]", request.Method, request.URL.Path, err)
 	_ = responseJSONError(response, http.StatusNotFound, "resources not found")
 }
+
+func (app *application) responseValidationError(response http.ResponseWriter, request *http.Request, err map[string]string) {
+	log.Printf("response validation error: [%s] - path: [%s] - error: [%s]", request.Method, request.URL.Path, err)
+	_ = writeJSON(response, http.StatusBadRequest, err)
+}

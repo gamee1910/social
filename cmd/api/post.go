@@ -11,8 +11,8 @@ import (
 )
 
 type CreatePostRequest struct {
-	Title   string   `json:"title"`
-	Content string   `json:"content"`
+	Title   string   `json:"title" validate:"required,max=200"`
+	Content string   `json:"content" validate:"required,max=1000"`
 	Tags    []string `json:"tags"`
 }
 
@@ -21,6 +21,12 @@ func (app *application) createPostHandler(response http.ResponseWriter, request 
 
 	if err := readJSON(response, request, &postRequest); err != nil {
 		app.badRequestError(response, request, err)
+		return
+	}
+
+	if err := Validate.Struct(postRequest); err != nil {
+		formatError := formatValidationErrors(err)
+		app.responseValidationError(response, request, formatError)
 		return
 	}
 
