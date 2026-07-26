@@ -20,7 +20,7 @@ func (app *application) createPostHandler(response http.ResponseWriter, request 
 	var postRequest CreatePostRequest
 
 	if err := readJSON(response, request, &postRequest); err != nil {
-		_ = writeJSON(response, http.StatusBadRequest, err.Error())
+		app.badRequestError(response, request, err)
 		return
 	}
 
@@ -35,12 +35,12 @@ func (app *application) createPostHandler(response http.ResponseWriter, request 
 	ctx := request.Context()
 
 	if err := app.store.Posts.Create(ctx, post); err != nil {
-		_ = writeJSON(response, http.StatusInternalServerError, err.Error())
+		app.internalServerError(response, request, err)
 		return
 	}
 
 	if err := writeJSON(response, http.StatusCreated, post); err != nil {
-		_ = responseJSONError(response, http.StatusInternalServerError, err.Error())
+		app.internalServerError(response, request, err)
 		return
 	}
 }
@@ -51,7 +51,7 @@ func (app *application) getPostHandler(response http.ResponseWriter, request *ht
 	idParam := chi.URLParam(request, "postId")
 	postId, err := strconv.ParseInt(idParam, 10, 64)
 	if err != nil {
-		_ = writeJSON(response, http.StatusInternalServerError, err.Error())
+		app.internalServerError(response, request, err)
 		return
 	}
 
@@ -59,15 +59,15 @@ func (app *application) getPostHandler(response http.ResponseWriter, request *ht
 	if err != nil {
 		switch {
 		case errors.Is(err, store.ErrNotFound):
-			_ = responseJSONError(response, http.StatusNotFound, err.Error())
+			app.notFoundError(response, request, err)
 		default:
-			_ = responseJSONError(response, http.StatusInternalServerError, err.Error())
+			app.internalServerError(response, request, err)
 		}
 		return
 	}
 
 	if err := writeJSON(response, http.StatusCreated, post); err != nil {
-		_ = responseJSONError(response, http.StatusInternalServerError, err.Error())
+		app.internalServerError(response, request, err)
 		return
 	}
 }
@@ -77,12 +77,12 @@ func (app *application) getAllPostHandler(response http.ResponseWriter, request 
 
 	posts, err := app.store.Posts.GetAll(ctx)
 	if err != nil {
-		_ = responseJSONError(response, http.StatusInternalServerError, err.Error())
+		app.internalServerError(response, request, err)
 		return
 	}
 
 	if err := writeJSON(response, http.StatusOK, posts); err != nil {
-		_ = responseJSONError(response, http.StatusInternalServerError, err.Error())
+		app.internalServerError(response, request, err)
 		return
 	}
 }

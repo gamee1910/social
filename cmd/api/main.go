@@ -31,7 +31,7 @@ func main() {
 	)
 
 	if err != nil {
-		log.Panic(err)
+		log.Panic("server error", err.Error())
 	}
 
 	defer func(database *sql.DB) {
