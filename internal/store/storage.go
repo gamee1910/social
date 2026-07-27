@@ -20,7 +20,8 @@ type Storage struct {
 	Posts interface {
 		Create(ctx context.Context, post *domain.Post) error
 		GetById(ctx context.Context, postId int64) (*domain.Post, error)
-		GetAll(ctx context.Context) ([]*domain.Post, error)
+		Delete(ctx context.Context, postId int64) error
+		Update(ctx context.Context, postId int64, post *domain.Post) (*domain.Post, error)
 	}
 
 	Comments interface {

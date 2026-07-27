@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"log"
 
 	"github.com/gamee1910/social/internal/domain"
@@ -67,45 +68,112 @@ func (store *PostsStore) GetById(ctx context.Context, postId int64) (*domain.Pos
 
 	return &post, nil
 }
-
-func (store *PostsStore) GetAll(ctx context.Context) ([]*domain.Post, error) {
-	query := `SELECT id, user_id, title, content, tags, created_at, updated_at FROM posts`
-
-	rows, err := store.db.QueryContext(ctx, query)
+func (store *PostsStore) Delete(ctx context.Context, postID int64) error {
+	tx, err := store.db.BeginTx(ctx, nil)
 	if err != nil {
-		return nil, err
+		return fmt.Errorf("begin transaction: %w", err)
 	}
+
 	defer func() {
-		if err := rows.Close(); err != nil {
-			log.Fatal(err)
+		if err := tx.Rollback(); err != nil && !errors.Is(err, sql.ErrTxDone) {
+			log.Printf("rollback failed: %v", err)
 		}
 	}()
 
-	var posts []*domain.Post
-	posts = make([]*domain.Post, 0, 100)
+	_, err = tx.ExecContext(
+		ctx,
+		`DELETE FROM comments WHERE post_id = $1`,
+		postID,
+	)
 
-	for rows.Next() {
-		var post domain.Post
+	if err != nil {
+		return fmt.Errorf("delete comments: %w", err)
+	}
 
-		err := rows.Scan(
-			&post.ID,
-			&post.UserId,
-			&post.Title,
-			&post.Content,
-			pq.Array(&post.Tags),
-			&post.CreatedAt,
-			&post.UpdatedAt,
-		)
-		if err != nil {
-			return nil, err
+	res, err := tx.ExecContext(
+		ctx,
+		`DELETE FROM posts WHERE id = $1`,
+		postID,
+	)
+
+	if err != nil {
+		return fmt.Errorf("delete post: %w", err)
+	}
+
+	rowsAffected, err := res.RowsAffected()
+
+	if err != nil {
+		return fmt.Errorf("rows affected: %w", err)
+	}
+
+	if rowsAffected == 0 {
+		return ErrNotFound
+	}
+
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("commit transaction: %w", err)
+	}
+
+	return nil
+}
+
+func (store *PostsStore) Update(ctx context.Context, postId int64, post *domain.Post) (*domain.Post, error) {
+	tx, err := store.db.BeginTx(ctx, nil)
+	if err != nil {
+		return nil, fmt.Errorf("begin transaction error: %w", err)
+	}
+
+	defer func() {
+		if err := tx.Rollback(); err != nil && errors.Is(err, sql.ErrTxDone) {
+			log.Printf("rollback failed: %v", err)
 		}
+	}()
 
-		posts = append(posts, &post)
+	var existingID int64
+	checkQuery := `SELECT id FROM posts WHERE id = $1`
+	err = tx.QueryRowContext(ctx, checkQuery, postId).Scan(&existingID)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, ErrNotFound
+		}
+		return nil, fmt.Errorf("check post existence: %w", err)
 	}
 
-	if err := rows.Err(); err != nil {
-		return nil, err
+	updateQuery := `
+		UPDATE posts
+		SET title = $1, content = $2, tags = $3, updated_at = NOW()
+		WHERE id = $4
+		RETURNING id, user_id, title, content, tags, created_at, updated_at
+	`
+
+	var updatePost domain.Post
+	err = tx.QueryRowContext(
+		ctx,
+		updateQuery,
+		post.Title,
+		post.Content,
+		pq.Array(post.Tags),
+		postId,
+	).Scan(
+		&updatePost.ID,
+		&updatePost.UserId,
+		&updatePost.Title,
+		&updatePost.Content,
+		pq.Array(&updatePost.Tags),
+		&updatePost.CreatedAt,
+		&updatePost.UpdatedAt,
+	)
+
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, ErrNotFound
+		}
+		return nil, fmt.Errorf("update post: %w", err)
 	}
 
-	return posts, nil
+	if err := tx.Commit(); err != nil {
+		return nil, fmt.Errorf("commit transaction: %w", err)
+	}
+
+	return &updatePost, nil
 }

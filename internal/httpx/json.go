@@ -2,6 +2,8 @@ package httpx
 
 import (
 	"encoding/json"
+	"errors"
+	"fmt"
 	"net/http"
 
 	"github.com/go-playground/validator/v10"
@@ -12,26 +14,39 @@ var Validate *validator.Validate
 func init() {
 	Validate = validator.New(validator.WithRequiredStructEnabled())
 }
-
 func FormatValidationErrors(err error) map[string]string {
-	errors := make(map[string]string)
+	errs := make(map[string]string)
 
-	if validationErrors, ok := err.(validator.ValidationErrors); ok {
-		for _, fieldError := range validationErrors {
-			switch fieldError.Tag() {
-			case "required":
-				errors[fieldError.Field()] = "This field is required"
-			case "email":
-				errors[fieldError.Field()] = "Email not correct format"
-			case "min":
-				errors[fieldError.Field()] = "Min length is not correct"
-			default:
-				errors[fieldError.Field()] = "Invalid value"
-			}
+	var validationErrors validator.ValidationErrors
+
+	ok := errors.As(err, &validationErrors)
+
+	if !ok {
+		return errs
+	}
+	for _, fieldError := range validationErrors {
+		param := fieldError.Param()
+		field := fieldError.Field()
+
+		switch fieldError.Tag() {
+		case "required":
+			errs[field] = fmt.Sprintf("%s is required", field)
+
+		case "email":
+			errs[field] = fmt.Sprintf("%s must be a valid email", field)
+
+		case "min":
+			errs[field] = fmt.Sprintf("%s must be at least %s characters", field, param)
+
+		case "max":
+			errs[field] = fmt.Sprintf("%s must not exceed %s characters", field, param)
+
+		default:
+			errs[field] = fmt.Sprintf("%s is invalid", field)
 		}
 	}
 
-	return errors
+	return errs
 }
 
 func WriteJSON(w http.ResponseWriter, status int, data any) error {
