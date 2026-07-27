@@ -1,4 +1,4 @@
-package main
+package httpx
 
 import (
 	"encoding/json"
@@ -13,7 +13,7 @@ func init() {
 	Validate = validator.New(validator.WithRequiredStructEnabled())
 }
 
-func formatValidationErrors(err error) map[string]string {
+func FormatValidationErrors(err error) map[string]string {
 	errors := make(map[string]string)
 
 	if validationErrors, ok := err.(validator.ValidationErrors); ok {
@@ -34,22 +34,22 @@ func formatValidationErrors(err error) map[string]string {
 	return errors
 }
 
-func writeJSON(w http.ResponseWriter, status int, data any) error {
+func WriteJSON(w http.ResponseWriter, status int, data any) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 	return json.NewEncoder(w).Encode(data)
 }
 
-func readJSON(w http.ResponseWriter, r *http.Request, data any) error {
+func ReadJSON(w http.ResponseWriter, r *http.Request, data any) error {
 	maxBytes := 1_048_578 // 1MegaByte
 	r.Body = http.MaxBytesReader(w, r.Body, int64(maxBytes))
 	decoder := json.NewDecoder(r.Body)
 	return decoder.Decode(data)
 }
 
-func responseJSONError(w http.ResponseWriter, status int, message string) error {
+func ResponseJSONError(w http.ResponseWriter, status int, message string) error {
 	type envelop struct {
 		Error string `json:"error"`
 	}
-	return writeJSON(w, status, &envelop{Error: message})
+	return WriteJSON(w, status, &envelop{Error: message})
 }

@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"github.com/gamee1910/social/internal/domain"
+	"github.com/gamee1910/social/internal/httpx"
 	"github.com/gamee1910/social/internal/store"
 	"github.com/go-chi/chi/v5"
 )
@@ -19,14 +20,14 @@ type CreatePostRequest struct {
 func (app *application) createPostHandler(response http.ResponseWriter, request *http.Request) {
 	var postRequest CreatePostRequest
 
-	if err := readJSON(response, request, &postRequest); err != nil {
-		app.badRequestError(response, request, err)
+	if err := httpx.ReadJSON(response, request, &postRequest); err != nil {
+		httpx.BadRequestError(response, request, err)
 		return
 	}
 
-	if err := Validate.Struct(postRequest); err != nil {
-		formatError := formatValidationErrors(err)
-		app.responseValidationError(response, request, formatError)
+	if err := httpx.Validate.Struct(postRequest); err != nil {
+		formatError := httpx.FormatValidationErrors(err)
+		httpx.ResponseValidationError(response, request, formatError)
 		return
 	}
 
@@ -41,12 +42,12 @@ func (app *application) createPostHandler(response http.ResponseWriter, request 
 	ctx := request.Context()
 
 	if err := app.store.Posts.Create(ctx, post); err != nil {
-		app.internalServerError(response, request, err)
+		httpx.InternalServerError(response, request, err)
 		return
 	}
 
-	if err := writeJSON(response, http.StatusCreated, post); err != nil {
-		app.internalServerError(response, request, err)
+	if err := httpx.WriteJSON(response, http.StatusCreated, post); err != nil {
+		httpx.InternalServerError(response, request, err)
 		return
 	}
 }
@@ -57,7 +58,7 @@ func (app *application) getPostHandler(response http.ResponseWriter, request *ht
 	idParam := chi.URLParam(request, "postId")
 	postId, err := strconv.ParseInt(idParam, 10, 64)
 	if err != nil {
-		app.internalServerError(response, request, err)
+		httpx.InternalServerError(response, request, err)
 		return
 	}
 
@@ -65,23 +66,23 @@ func (app *application) getPostHandler(response http.ResponseWriter, request *ht
 	if err != nil {
 		switch {
 		case errors.Is(err, store.ErrNotFound):
-			app.notFoundError(response, request, err)
+			httpx.NotFoundError(response, request, err)
 		default:
-			app.internalServerError(response, request, err)
+			httpx.InternalServerError(response, request, err)
 		}
 		return
 	}
 
 	comments, err := app.store.Comments.GetByPostId(context, postId)
 	if err != nil {
-		app.internalServerError(response, request, err)
+		httpx.InternalServerError(response, request, err)
 		return
 	}
 
 	post.Comment = comments
 
-	if err := writeJSON(response, http.StatusCreated, post); err != nil {
-		app.internalServerError(response, request, err)
+	if err := httpx.WriteJSON(response, http.StatusCreated, post); err != nil {
+		httpx.InternalServerError(response, request, err)
 		return
 	}
 }
@@ -91,12 +92,12 @@ func (app *application) getAllPostHandler(response http.ResponseWriter, request 
 
 	posts, err := app.store.Posts.GetAll(ctx)
 	if err != nil {
-		app.internalServerError(response, request, err)
+		httpx.InternalServerError(response, request, err)
 		return
 	}
 
-	if err := writeJSON(response, http.StatusOK, posts); err != nil {
-		app.internalServerError(response, request, err)
+	if err := httpx.WriteJSON(response, http.StatusOK, posts); err != nil {
+		httpx.InternalServerError(response, request, err)
 		return
 	}
 }

@@ -2,6 +2,8 @@ package main
 
 import (
 	"net/http"
+
+	"github.com/gamee1910/social/internal/httpx"
 )
 
 func (app *application) healthCheckHandler(response http.ResponseWriter, request *http.Request) {
@@ -10,7 +12,7 @@ func (app *application) healthCheckHandler(response http.ResponseWriter, request
 		"env":     app.config.env,
 		"version": version,
 	}
-	if err := writeJSON(response, http.StatusOK, data); err != nil {
-		app.internalServerError(response, request, err)
+	if err := httpx.WriteJSON(response, http.StatusOK, data); err != nil {
+		httpx.InternalServerError(response, request, err)
 	}
 }
