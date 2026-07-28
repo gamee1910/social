@@ -6,14 +6,14 @@ import (
 	"log"
 	"time"
 
-	"github.com/gamee1910/social/internal/domain"
+	"github.com/gamee1910/social/internal/domain/entity"
 )
 
 type CommentsStore struct {
 	db *sql.DB
 }
 
-func (store *CommentsStore) GetByPostId(ctx context.Context, postId int64) ([]domain.Comment, error) {
+func (store *CommentsStore) GetByPostId(ctx context.Context, postId int64) ([]entity.Comment, error) {
 	query := `
 		SELECT c.id, c.post_id, c.user_id, c.content, c.created_at, u.username, u.id
 		FROM comments c JOIN users u on c.user_id = u.id
@@ -33,11 +33,11 @@ func (store *CommentsStore) GetByPostId(ctx context.Context, postId int64) ([]do
 		}
 	}(rows)
 
-	var comments []domain.Comment
+	var comments []entity.Comment
 
 	for rows.Next() {
-		var cmt domain.Comment
-		cmt.User = domain.User{}
+		var cmt entity.Comment
+		cmt.User = entity.User{}
 
 		err := rows.Scan(
 			&cmt.ID,

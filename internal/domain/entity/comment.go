@@ -1,4 +1,4 @@
-package domain
+package entity
 
 type Comment struct {
 	ID        int64  `json:"id"`

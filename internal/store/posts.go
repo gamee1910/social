@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/gamee1910/social/internal/domain"
+	"github.com/gamee1910/social/internal/domain/entity"
 	"github.com/lib/pq"
 )
 
@@ -15,7 +15,7 @@ type PostsStore struct {
 	db *sql.DB
 }
 
-func (store *PostsStore) Create(ctx context.Context, post *domain.Post) error {
+func (store *PostsStore) Create(ctx context.Context, post *entity.Post) error {
 	query := `
 		INSERT INTO posts(content, title, user_id, tags)
 		VALUES ($1, $2, $3, $4)
@@ -37,14 +37,14 @@ func (store *PostsStore) Create(ctx context.Context, post *domain.Post) error {
 	return nil
 }
 
-func (store *PostsStore) GetById(ctx context.Context, postId int64) (*domain.Post, error) {
+func (store *PostsStore) GetById(ctx context.Context, postId int64) (*entity.Post, error) {
 	query := `
 		SELECT id, user_id, title, content, tags, created_at, updated_at
 		FROM posts
 		WHERE id = $1
 	`
 
-	var post domain.Post
+	var post entity.Post
 
 	err := store.db.QueryRowContext(ctx, query, postId).
 		Scan(
@@ -117,7 +117,7 @@ func (store *PostsStore) Delete(ctx context.Context, postID int64) error {
 	return nil
 }
 
-func (store *PostsStore) Update(ctx context.Context, postId int64, post *domain.Post) (*domain.Post, error) {
+func (store *PostsStore) Update(ctx context.Context, postId int64, post *entity.Post) (*entity.Post, error) {
 	tx, err := store.db.BeginTx(ctx, nil)
 	if err != nil {
 		return nil, fmt.Errorf("begin transaction error: %w", err)
@@ -146,7 +146,7 @@ func (store *PostsStore) Update(ctx context.Context, postId int64, post *domain.
 		RETURNING id, user_id, title, content, tags, created_at, updated_at
 	`
 
-	var updatePost domain.Post
+	var updatePost entity.Post
 	err = tx.QueryRowContext(
 		ctx,
 		updateQuery,

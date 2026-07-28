@@ -1,5 +1,5 @@
 DB_URL=postgres://admin:password@localhost:5432/social?sslmode=disable
-MIGRATIONS=./cmd/migrate/migrations
+MIGRATIONS=./migrations
 
 .PHONY: migrate-create migrate-up migrate-down migrate-down-one migrate-version migrate-force
 
