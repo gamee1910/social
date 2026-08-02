@@ -7,6 +7,7 @@ type Post struct {
 	UserId    int64     `json:"user_id"`
 	Tags      []string  `json:"tags"`
 	Comment   []Comment `json:"comments"`
+	Version   int       `json:"version"`
 	CreatedAt string    `json:"created_at"`
 	UpdatedAt string    `json:"updated_at"`
 }
