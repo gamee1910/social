@@ -1,4 +1,4 @@
-package db
+package config
 
 import (
 	"context"
@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-func New(add string, maxOpenConnection, maxIdelConnection int, maxIdelTime string) (*sql.DB, error) {
+func DatabaseConnection(add string, maxOpenConnection, maxIdelConnection int, maxIdelTime string) (*sql.DB, error) {
 	db, err := sql.Open("postgres", add)
 	if err != nil {
 		return nil, err

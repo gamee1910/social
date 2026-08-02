@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/gamee1910/social/internal/config"
-	"github.com/gamee1910/social/internal/db"
 	"github.com/gamee1910/social/internal/env"
 	"github.com/gamee1910/social/internal/routes"
 	"github.com/gamee1910/social/internal/service"
@@ -30,12 +29,13 @@ func main() {
 	appLogger := logger.NewLogger(cfg.Env)
 	defer appLogger.Sync()
 
-	database, err := db.New(
+	database, err := config.DatabaseConnection(
 		cfg.Database.Addr,
 		cfg.Database.MaxOpenConnections,
 		cfg.Database.MaxIdleConnections,
 		cfg.Database.MaxIdleTime,
 	)
+
 	if err != nil {
 		appLogger.Fatal(err)
 	}
