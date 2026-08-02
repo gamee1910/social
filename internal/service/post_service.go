@@ -11,14 +11,14 @@ import (
 )
 
 type PostService struct {
-	postStore    store.PostRepository
-	commentStore store.CommentRepository
+	postRepository    store.PostRepository
+	commentRepository store.CommentRepository
 }
 
 func NewPostService(postStore store.PostRepository, commentStore store.CommentRepository) *PostService {
 	return &PostService{
-		postStore:    postStore,
-		commentStore: commentStore,
+		postRepository:    postStore,
+		commentRepository: commentStore,
 	}
 }
 
@@ -30,7 +30,7 @@ func (ps *PostService) Create(ctx context.Context, req dto.CreatePostRequest) (*
 		UserId:  1, // TODO: get from auth context
 	}
 
-	if err := ps.postStore.Create(ctx, post); err != nil {
+	if err := ps.postRepository.Create(ctx, post); err != nil {
 		return nil, err
 	}
 
@@ -38,7 +38,7 @@ func (ps *PostService) Create(ctx context.Context, req dto.CreatePostRequest) (*
 }
 
 func (ps *PostService) GetById(ctx context.Context, postID int64) (*entity.Post, error) {
-	post, err := ps.postStore.GetById(ctx, postID)
+	post, err := ps.postRepository.GetById(ctx, postID)
 	if err != nil {
 		return nil, translatePostError(err)
 	}
@@ -46,12 +46,12 @@ func (ps *PostService) GetById(ctx context.Context, postID int64) (*entity.Post,
 }
 
 func (ps *PostService) GetByIdWithComments(ctx context.Context, postID int64) (*entity.Post, error) {
-	post, err := ps.postStore.GetById(ctx, postID)
+	post, err := ps.postRepository.GetById(ctx, postID)
 	if err != nil {
 		return nil, translatePostError(err)
 	}
 
-	comments, err := ps.commentStore.GetByPostId(ctx, post.ID)
+	comments, err := ps.commentRepository.GetByPostId(ctx, post.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -61,14 +61,14 @@ func (ps *PostService) GetByIdWithComments(ctx context.Context, postID int64) (*
 }
 
 func (ps *PostService) Delete(ctx context.Context, postID int64) error {
-	if err := ps.postStore.Delete(ctx, postID); err != nil {
+	if err := ps.postRepository.Delete(ctx, postID); err != nil {
 		return translatePostError(err)
 	}
 	return nil
 }
 
 func (ps *PostService) Update(ctx context.Context, postID int64, req dto.UpdatePostRequest) (*entity.Post, error) {
-	post, err := ps.postStore.GetById(ctx, postID)
+	post, err := ps.postRepository.GetById(ctx, postID)
 	if err != nil {
 		return nil, translatePostError(err)
 	}
@@ -85,7 +85,7 @@ func (ps *PostService) Update(ctx context.Context, postID int64, req dto.UpdateP
 		post.Tags = req.Tags
 	}
 
-	updatedPost, err := ps.postStore.Update(ctx, postID, post)
+	updatedPost, err := ps.postRepository.Update(ctx, postID, post)
 	if err != nil {
 		return nil, translatePostError(err)
 	}

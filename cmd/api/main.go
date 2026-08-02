@@ -59,7 +59,11 @@ func main() {
 		log.Fatal(err)
 	}
 
-	appLogger.Info("starting server", "addr", cfg.Addr, "env", cfg.Env)
+	appLogger.Infof(
+		"starting server port=%s env=%s",
+		cfg.Addr,
+		cfg.Env,
+	)
 
 	log.Fatal(run(cfg, handler.Mount()))
 }

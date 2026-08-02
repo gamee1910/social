@@ -8,15 +8,15 @@ import (
 )
 
 type CommentService struct {
-	commentStore store.CommentRepository
+	commentRepository store.CommentRepository
 }
 
 func NewCommentService(commentStore store.CommentRepository) *CommentService {
 	return &CommentService{
-		commentStore: commentStore,
+		commentRepository: commentStore,
 	}
 }
 
 func (cs *CommentService) GetByPostId(ctx context.Context, postID int64) ([]entity.Comment, error) {
-	return cs.commentStore.GetByPostId(ctx, postID)
+	return cs.commentRepository.GetByPostId(ctx, postID)
 }

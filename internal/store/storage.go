@@ -17,6 +17,7 @@ var (
 
 type UserRepository interface {
 	Create(ctx context.Context, user *entity.User) error
+	GetById(ctx context.Context, userID int64) (*entity.User, error)
 }
 
 type PostRepository interface {

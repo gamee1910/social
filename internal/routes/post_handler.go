@@ -2,14 +2,13 @@ package routes
 
 import (
 	"errors"
-	"fmt"
 	"net/http"
-	"strconv"
 
 	"github.com/gamee1910/social/internal/config"
 	"github.com/gamee1910/social/internal/dto"
-	"github.com/go-chi/chi/v5"
 )
+
+var postID string = "postId"
 
 func (h *Handler) createPostHandler(w http.ResponseWriter, r *http.Request) {
 	var req dto.CreatePostRequest
@@ -38,7 +37,7 @@ func (h *Handler) createPostHandler(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) getPostHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	postId, err := getIDFromParameter(r)
+	postId, err := getIDFromParameter(postID, r)
 	if err != nil {
 		BadRequestError(w, r, err)
 		return
@@ -59,7 +58,7 @@ func (h *Handler) getPostHandler(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) deletePostHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	postId, err := getIDFromParameter(r)
+	postId, err := getIDFromParameter(postID, r)
 	if err != nil {
 		BadRequestError(w, r, err)
 		return
@@ -76,7 +75,7 @@ func (h *Handler) deletePostHandler(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) updatePostHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	postID, err := getIDFromParameter(r)
+	postID, err := getIDFromParameter(postID, r)
 	if err != nil {
 		BadRequestError(w, r, err)
 		return
@@ -108,15 +107,4 @@ func (h *Handler) updatePostHandler(w http.ResponseWriter, r *http.Request) {
 		InternalServerError(w, r, err)
 		return
 	}
-}
-
-func getIDFromParameter(r *http.Request) (int64, error) {
-	id := chi.URLParam(r, "postId")
-
-	postID, err := strconv.ParseInt(id, 10, 64)
-	if err != nil {
-		return 0, fmt.Errorf("invalid post id: %w", err)
-	}
-
-	return postID, nil
 }

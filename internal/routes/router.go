@@ -28,6 +28,12 @@ func (h *Handler) Mount() *chi.Mux {
 			})
 
 		})
+
+		r.Route("/users", func(r chi.Router) {
+			r.Route("/{userID}", func(r chi.Router) {
+				r.Get("/", h.getUserById)
+			})
+		})
 	})
 
 	return r
@@ -43,4 +49,3 @@ func (h *Handler) healthCheck(w http.ResponseWriter, r *http.Request) {
 		InternalServerError(w, r, err)
 	}
 }
-
