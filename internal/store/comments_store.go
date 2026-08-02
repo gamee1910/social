@@ -17,6 +17,9 @@ func NewCommentsStore(db *sql.DB) *CommentsStore {
 }
 
 func (store *CommentsStore) GetByPostId(ctx context.Context, postId int64) ([]entity.Comment, error) {
+	ctx, cancel := context.WithTimeout(ctx, QueryTimeoutDuration)
+	defer cancel()
+
 	query := `
 		SELECT c.id, c.post_id, c.user_id, c.content, c.created_at, u.username, u.id
 		FROM comments c JOIN users u on c.user_id = u.id

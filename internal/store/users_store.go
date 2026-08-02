@@ -19,6 +19,9 @@ func NewUsersStore(db *sql.DB) *UsersStore {
 }
 
 func (us *UsersStore) Create(ctx context.Context, user *entity.User) error {
+	ctx, cancel := context.WithTimeout(ctx, QueryTimeoutDuration)
+	defer cancel()
+
 	query := `INSERT INTO users(username, email, password) VALUES ($1, $2, $3) RETURNING id, created_at`
 
 	err := us.db.QueryRowContext(ctx, query, user.Username, user.Email, user.Password).Scan(
@@ -33,8 +36,8 @@ func (us *UsersStore) Create(ctx context.Context, user *entity.User) error {
 }
 
 func (us *UsersStore) GetById(ctx context.Context, userID int64) (*entity.User, error) {
-	ctx, cancle := context.WithTimeout(ctx, QueryTimeoutDuration)
-	defer cancle()
+	ctx, cancel := context.WithTimeout(ctx, QueryTimeoutDuration)
+	defer cancel()
 
 	query := `SELECT id, username, email FROM users WHERE id = $1`
 

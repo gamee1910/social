@@ -21,8 +21,8 @@ func main() {
 		Database: config.DatabaseConfig{
 			Addr:               env.GetString("DB_ADDR", "postgres://admin:password@localhost/social?sslmode=disable"),
 			MaxOpenConnections: env.GetInt("DB_MAX_OPEN_CONS", 30),
-			MaxIdleConnections: env.GetInt("DB_MAX_IDEL_CONS", 30),
-			MaxIdleTime:        env.GetString("DB_MAX_IDEL_TIME", "15m"),
+			MaxIdleConnections: env.GetInt("DB_MAX_IDLE_CONS", 30),
+			MaxIdleTime:        env.GetString("DB_MAX_IDLE_TIME", "15m"),
 		},
 		Env: env.GetString("ENV", "development"),
 	}
@@ -53,10 +53,11 @@ func main() {
 
 	handler := routes.NewHandler(cfg, service, appLogger)
 
-	seed := db.NewSeed(database)
-
-	if err := seed.Run(); err != nil {
-		log.Fatal(err)
+	if cfg.Env == "development" {
+		seed := db.NewSeed(database)
+		if err := seed.Run(); err != nil {
+			log.Fatal(err)
+		}
 	}
 
 	appLogger.Infof(

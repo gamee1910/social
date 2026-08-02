@@ -8,7 +8,7 @@ import (
 	"github.com/gamee1910/social/internal/dto"
 )
 
-var postID string = "postId"
+const postIDKey string = "postId"
 
 func (h *Handler) createPostHandler(w http.ResponseWriter, r *http.Request) {
 	var req dto.CreatePostRequest
@@ -37,7 +37,7 @@ func (h *Handler) createPostHandler(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) getPostHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	postId, err := getIDFromParameter(postID, r)
+	postId, err := getIDFromParameter(postIDKey, r)
 	if err != nil {
 		BadRequestError(w, r, err)
 		return
@@ -58,7 +58,7 @@ func (h *Handler) getPostHandler(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) deletePostHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	postId, err := getIDFromParameter(postID, r)
+	postId, err := getIDFromParameter(postIDKey, r)
 	if err != nil {
 		BadRequestError(w, r, err)
 		return
@@ -75,7 +75,7 @@ func (h *Handler) deletePostHandler(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) updatePostHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	postID, err := getIDFromParameter(postID, r)
+	id, err := getIDFromParameter(postIDKey, r)
 	if err != nil {
 		BadRequestError(w, r, err)
 		return
@@ -97,7 +97,7 @@ func (h *Handler) updatePostHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	post, err := h.service.PostsService.Update(ctx, postID, req)
+	post, err := h.service.PostsService.Update(ctx, id, req)
 	if err != nil {
 		HandleServiceError(w, r, err)
 		return

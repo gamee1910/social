@@ -6,25 +6,27 @@ import (
 	"time"
 )
 
-func DatabaseConnection(add string, maxOpenConnection, maxIdelConnection int, maxIdelTime string) (*sql.DB, error) {
-	db, err := sql.Open("postgres", add)
+const QueryTimeoutDuration = time.Second * 5
+
+func DatabaseConnection(addr string, maxOpenConnection, maxIdleConnection int, maxIdleTime string) (*sql.DB, error) {
+	db, err := sql.Open("postgres", addr)
 	if err != nil {
 		return nil, err
 	}
 
 	db.SetMaxOpenConns(maxOpenConnection)
-	db.SetMaxIdleConns(maxIdelConnection)
+	db.SetMaxIdleConns(maxIdleConnection)
 
-	duration, err := time.ParseDuration(maxIdelTime)
+	duration, err := time.ParseDuration(maxIdleTime)
 	if err != nil {
 		return nil, err
 	}
 
 	db.SetConnMaxIdleTime(time.Duration(duration))
 
-	ctx, cancle := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), QueryTimeoutDuration)
 
-	defer cancle()
+	defer cancel()
 
 	if err = db.PingContext(ctx); err != nil {
 		return nil, err
