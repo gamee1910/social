@@ -5,8 +5,8 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"log"
 
+	"github.com/gamee1910/social/internal/domain"
 	"github.com/gamee1910/social/internal/domain/entity"
 )
 
@@ -46,8 +46,7 @@ func (us *UsersStore) GetById(ctx context.Context, userID int64) (*entity.User, 
 	err := us.db.QueryRowContext(ctx, query, userID).Scan(&user.ID, &user.Username, &user.Email)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			log.Printf("user not found: [%d]", userID)
-			return nil, ErrNotFound
+			return nil, domain.ErrNotFound
 		}
 		return nil, fmt.Errorf("[user store] - [GetById] - err: [%w]", err)
 	}

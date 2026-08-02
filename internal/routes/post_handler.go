@@ -4,8 +4,8 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/gamee1910/social/internal/config"
 	"github.com/gamee1910/social/internal/dto"
+	"github.com/gamee1910/social/internal/httputil"
 )
 
 const postIDKey string = "postId"
@@ -13,13 +13,13 @@ const postIDKey string = "postId"
 func (h *Handler) createPostHandler(w http.ResponseWriter, r *http.Request) {
 	var req dto.CreatePostRequest
 
-	if err := config.ReadJSON(w, r, &req); err != nil {
+	if err := httputil.ReadJSON(w, r, &req); err != nil {
 		BadRequestError(w, r, err)
 		return
 	}
 
-	if err := config.Validate.Struct(req); err != nil {
-		ResponseValidationError(w, r, config.FormatValidationErrors(err))
+	if err := httputil.Validate.Struct(req); err != nil {
+		ResponseValidationError(w, r, httputil.FormatValidationErrors(err))
 		return
 	}
 
@@ -29,7 +29,7 @@ func (h *Handler) createPostHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := config.ResponseJSON(w, http.StatusCreated, post); err != nil {
+	if err := httputil.ResponseJSON(w, http.StatusCreated, post); err != nil {
 		InternalServerError(w, r, err)
 	}
 }
@@ -49,7 +49,7 @@ func (h *Handler) getPostHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := config.ResponseJSON(w, http.StatusOK, post); err != nil {
+	if err := httputil.ResponseJSON(w, http.StatusOK, post); err != nil {
 		InternalServerError(w, r, err)
 		return
 	}
@@ -82,7 +82,7 @@ func (h *Handler) updatePostHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var req dto.UpdatePostRequest
-	if err := config.ReadJSON(w, r, &req); err != nil {
+	if err := httputil.ReadJSON(w, r, &req); err != nil {
 		BadRequestError(w, r, err)
 		return
 	}
@@ -92,8 +92,8 @@ func (h *Handler) updatePostHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := config.Validate.Struct(req); err != nil {
-		ResponseValidationError(w, r, config.FormatValidationErrors(err))
+	if err := httputil.Validate.Struct(req); err != nil {
+		ResponseValidationError(w, r, httputil.FormatValidationErrors(err))
 		return
 	}
 
@@ -103,7 +103,7 @@ func (h *Handler) updatePostHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := config.ResponseJSON(w, http.StatusOK, post); err != nil {
+	if err := httputil.ResponseJSON(w, http.StatusOK, post); err != nil {
 		InternalServerError(w, r, err)
 		return
 	}

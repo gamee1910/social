@@ -95,9 +95,9 @@ func (ps *PostService) Update(ctx context.Context, postID int64, req dto.UpdateP
 
 func translatePostError(err error) error {
 	switch {
-	case errors.Is(err, store.ErrNotFound):
+	case errors.Is(err, domain.ErrNotFound):
 		return &domain.NotFoundError{Resource: "post"}
-	case errors.Is(err, store.ErrVersionConflict):
+	case errors.Is(err, domain.ErrVersionConflict):
 		return &domain.ConflictError{Resource: "post"}
 	default:
 		return err

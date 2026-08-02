@@ -3,7 +3,7 @@ package routes
 import (
 	"net/http"
 
-	"github.com/gamee1910/social/internal/config"
+	"github.com/gamee1910/social/internal/httputil"
 )
 
 const userIDKey string = "userID"
@@ -23,7 +23,7 @@ func (h *Handler) getUserById(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := config.ResponseJSON(w, http.StatusOK, user); err != nil {
+	if err := httputil.ResponseJSON(w, http.StatusOK, user); err != nil {
 		InternalServerError(w, r, err)
 		return
 	}

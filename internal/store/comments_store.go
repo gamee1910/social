@@ -3,7 +3,6 @@ package store
 import (
 	"context"
 	"database/sql"
-	"log"
 
 	"github.com/gamee1910/social/internal/domain/entity"
 )
@@ -32,12 +31,7 @@ func (store *CommentsStore) GetByPostId(ctx context.Context, postId int64) ([]en
 		return nil, err
 	}
 
-	defer func(rows *sql.Rows) {
-		err := rows.Close()
-		if err != nil {
-			log.Printf("failed to close rows: [%v]", err)
-		}
-	}(rows)
+	defer rows.Close()
 
 	comments := make([]entity.Comment, 0)
 

@@ -7,9 +7,9 @@ import (
 	"time"
 
 	"github.com/gamee1910/social/internal/config"
-	"github.com/gamee1910/social/internal/db"
 	"github.com/gamee1910/social/internal/env"
 	"github.com/gamee1910/social/internal/routes"
+	"github.com/gamee1910/social/internal/seeder"
 	"github.com/gamee1910/social/internal/service"
 	"github.com/gamee1910/social/internal/store"
 	"github.com/gamee1910/social/pkg/logger"
@@ -49,12 +49,12 @@ func main() {
 
 	storage := store.NewStorage(database)
 
-	service := service.NewService(storage)
+	svc := service.NewService(storage)
 
-	handler := routes.NewHandler(cfg, service, appLogger)
+	handler := routes.NewHandler(cfg, svc, appLogger)
 
 	if cfg.Env == "development" {
-		seed := db.NewSeed(database)
+		seed := seeder.NewSeed(database)
 		if err := seed.Run(); err != nil {
 			log.Fatal(err)
 		}

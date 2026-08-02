@@ -2,7 +2,9 @@ package service
 
 import (
 	"context"
+	"errors"
 
+	"github.com/gamee1910/social/internal/domain"
 	"github.com/gamee1910/social/internal/domain/entity"
 	"github.com/gamee1910/social/internal/store"
 )
@@ -18,5 +20,18 @@ func NewUserService(userRepository store.UserRepository) *UserService {
 }
 
 func (us *UserService) GetById(ctx context.Context, userID int64) (*entity.User, error) {
-	return us.userRepository.GetById(ctx, userID)
+	user, err := us.userRepository.GetById(ctx, userID)
+	if err != nil {
+		return nil, translateUserError(err)
+	}
+	return user, nil
+}
+
+func translateUserError(err error) error {
+	switch {
+	case errors.Is(err, domain.ErrNotFound):
+		return &domain.NotFoundError{Resource: "user"}
+	default:
+		return err
+	}
 }

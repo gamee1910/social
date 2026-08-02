@@ -3,7 +3,7 @@ package routes
 import (
 	"net/http"
 
-	"github.com/gamee1910/social/internal/config"
+	"github.com/gamee1910/social/internal/httputil"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 )
@@ -45,7 +45,7 @@ func (h *Handler) healthCheck(w http.ResponseWriter, r *http.Request) {
 		"version": version,
 	}
 
-	if err := config.WriteJSON(w, http.StatusOK, data); err != nil {
+	if err := httputil.WriteJSON(w, http.StatusOK, data); err != nil {
 		InternalServerError(w, r, err)
 	}
 }

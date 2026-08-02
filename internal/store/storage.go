@@ -3,16 +3,17 @@ package store
 import (
 	"context"
 	"database/sql"
-	"errors"
 	"time"
 
+	"github.com/gamee1910/social/internal/domain"
 	"github.com/gamee1910/social/internal/domain/entity"
 )
 
+var QueryTimeoutDuration = time.Second * 5
+
 var (
-	ErrNotFound          = errors.New("resource not found")
-	ErrVersionConflict   = errors.New("version conflict")
-	QueryTimeoutDuration = time.Second * 5
+	ErrNotFound        = domain.ErrNotFound
+	ErrVersionConflict = domain.ErrVersionConflict
 )
 
 type UserRepository interface {

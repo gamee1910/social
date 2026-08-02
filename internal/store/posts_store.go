@@ -5,8 +5,8 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"log"
 
+	"github.com/gamee1910/social/internal/domain"
 	"github.com/gamee1910/social/internal/domain/entity"
 	"github.com/lib/pq"
 )
@@ -70,8 +70,7 @@ func (store *PostsStore) GetById(ctx context.Context, postId int64) (*entity.Pos
 		)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			log.Printf("Post not found: %d", postId)
-			return nil, ErrNotFound
+			return nil, domain.ErrNotFound
 		}
 		return nil, fmt.Errorf("get post: [%w]", err)
 	}
@@ -99,7 +98,7 @@ func (store *PostsStore) Delete(ctx context.Context, postID int64) error {
 	}
 
 	if rowsAffected == 0 {
-		return ErrNotFound
+		return domain.ErrNotFound
 	}
 
 	return nil
@@ -116,7 +115,8 @@ func (store *PostsStore) Update(ctx context.Context, postId int64, post *entity.
 
 	defer func() {
 		if err := tx.Rollback(); err != nil && !errors.Is(err, sql.ErrTxDone) {
-			log.Printf("rollback failed: %v", err)
+			// rollback failure is non-critical; the original error already propagates
+			_ = err
 		}
 	}()
 
@@ -156,10 +156,10 @@ func (store *PostsStore) Update(ctx context.Context, postId int64, post *entity.
 			}
 
 			if !exists {
-				return nil, ErrNotFound
+				return nil, domain.ErrNotFound
 			}
 
-			return nil, ErrVersionConflict
+			return nil, domain.ErrVersionConflict
 		}
 		return nil, fmt.Errorf("update post: %w", err)
 	}
