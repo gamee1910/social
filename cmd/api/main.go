@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/gamee1910/social/internal/config"
+	"github.com/gamee1910/social/internal/db"
 	"github.com/gamee1910/social/internal/env"
 	"github.com/gamee1910/social/internal/routes"
 	"github.com/gamee1910/social/internal/service"
@@ -51,6 +52,12 @@ func main() {
 	service := service.NewService(storage)
 
 	handler := routes.NewHandler(cfg, service, appLogger)
+
+	seed := db.NewSeed(database)
+
+	if err := seed.Run(); err != nil {
+		log.Fatal(err)
+	}
 
 	appLogger.Info("starting server", "addr", cfg.Addr, "env", cfg.Env)
 

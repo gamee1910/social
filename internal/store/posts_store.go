@@ -20,6 +20,9 @@ func NewPostsStore(db *sql.DB) *PostsStore {
 }
 
 func (store *PostsStore) Create(ctx context.Context, post *entity.Post) error {
+	ctx, cancel := context.WithTimeout(ctx, QueryTimeoutDuration)
+	defer cancel()
+
 	query := `
 		INSERT INTO posts(content, title, user_id, tags)
 		VALUES ($1, $2, $3, $4)
@@ -36,13 +39,16 @@ func (store *PostsStore) Create(ctx context.Context, post *entity.Post) error {
 	)
 
 	if err != nil {
-		return err
+		return fmt.Errorf("create post: [%w]", err)
 	}
 
 	return nil
 }
 
 func (store *PostsStore) GetById(ctx context.Context, postId int64) (*entity.Post, error) {
+	ctx, cancel := context.WithTimeout(ctx, QueryTimeoutDuration)
+	defer cancel()
+
 	query := `
 		SELECT id, user_id, title, content, tags, version, created_at, updated_at
 		FROM posts
@@ -63,52 +69,31 @@ func (store *PostsStore) GetById(ctx context.Context, postId int64) (*entity.Pos
 			&post.UpdatedAt,
 		)
 	if err != nil {
-		switch {
-		case errors.Is(err, sql.ErrNoRows):
+		if errors.Is(err, sql.ErrNoRows) {
+			log.Printf("Post not found: %d", postId)
 			return nil, ErrNotFound
-
-		default:
-			return nil, err
 		}
+		return nil, fmt.Errorf("get post: [%w]", err)
 	}
 
 	return &post, nil
 }
 
 func (store *PostsStore) Delete(ctx context.Context, postID int64) error {
-	tx, err := store.db.BeginTx(ctx, nil)
-	if err != nil {
-		return fmt.Errorf("begin transaction: %w", err)
-	}
 
-	defer func() {
-		if err := tx.Rollback(); err != nil && !errors.Is(err, sql.ErrTxDone) {
-			log.Printf("rollback failed: %v", err)
-		}
-	}()
+	ctx, cancel := context.WithTimeout(ctx, QueryTimeoutDuration)
+	defer cancel()
 
-	_, err = tx.ExecContext(
-		ctx,
-		`DELETE FROM comments WHERE post_id = $1`,
-		postID,
-	)
-
-	if err != nil {
-		return fmt.Errorf("delete comments: %w", err)
-	}
-
-	res, err := tx.ExecContext(
+	res, err := store.db.ExecContext(
 		ctx,
 		`DELETE FROM posts WHERE id = $1`,
 		postID,
 	)
-
 	if err != nil {
 		return fmt.Errorf("delete post: %w", err)
 	}
 
 	rowsAffected, err := res.RowsAffected()
-
 	if err != nil {
 		return fmt.Errorf("rows affected: %w", err)
 	}
@@ -117,14 +102,13 @@ func (store *PostsStore) Delete(ctx context.Context, postID int64) error {
 		return ErrNotFound
 	}
 
-	if err := tx.Commit(); err != nil {
-		return fmt.Errorf("commit transaction: %w", err)
-	}
-
 	return nil
 }
 
 func (store *PostsStore) Update(ctx context.Context, postId int64, post *entity.Post) (*entity.Post, error) {
+	ctx, cancel := context.WithTimeout(ctx, QueryTimeoutDuration)
+	defer cancel()
+
 	tx, err := store.db.BeginTx(ctx, nil)
 	if err != nil {
 		return nil, fmt.Errorf("begin transaction error: %w", err)

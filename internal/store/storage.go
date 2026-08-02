@@ -4,13 +4,15 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"time"
 
 	"github.com/gamee1910/social/internal/domain/entity"
 )
 
 var (
-	ErrNotFound        = errors.New("resource not found")
-	ErrVersionConflict = errors.New("version conflict")
+	ErrNotFound          = errors.New("resource not found")
+	ErrVersionConflict   = errors.New("version conflict")
+	QueryTimeoutDuration = time.Second * 5
 )
 
 type UserRepository interface {
