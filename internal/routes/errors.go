@@ -1,10 +1,12 @@
 package routes
 
 import (
+	"errors"
 	"log"
 	"net/http"
 
 	"github.com/gamee1910/social/internal/config"
+	"github.com/gamee1910/social/internal/domain"
 )
 
 func InternalServerError(w http.ResponseWriter, r *http.Request, err error) {
@@ -30,4 +32,18 @@ func ConflictError(w http.ResponseWriter, r *http.Request, err error) {
 func ResponseValidationError(w http.ResponseWriter, r *http.Request, err map[string]string) {
 	log.Printf("validation error: [%s] - path: [%s] - error: [%s]", r.Method, r.URL.Path, err)
 	_ = config.WriteJSON(w, http.StatusBadRequest, err)
+}
+
+func HandleServiceError(w http.ResponseWriter, r *http.Request, err error) {
+	var notFoundErr *domain.NotFoundError
+	var conflictErr *domain.ConflictError
+
+	switch {
+	case errors.As(err, &notFoundErr):
+		NotFoundError(w, r, err)
+	case errors.As(err, &conflictErr):
+		ConflictError(w, r, err)
+	default:
+		InternalServerError(w, r, err)
+	}
 }

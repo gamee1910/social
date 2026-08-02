@@ -7,7 +7,6 @@ import (
 	"strconv"
 
 	"github.com/gamee1910/social/internal/config"
-	"github.com/gamee1910/social/internal/domain"
 	"github.com/gamee1910/social/internal/dto"
 	"github.com/go-chi/chi/v5"
 )
@@ -47,7 +46,7 @@ func (h *Handler) getPostHandler(w http.ResponseWriter, r *http.Request) {
 
 	post, err := h.service.PostsService.GetByIdWithComments(ctx, postId)
 	if err != nil {
-		handleServiceError(w, r, err)
+		HandleServiceError(w, r, err)
 		return
 	}
 
@@ -67,7 +66,7 @@ func (h *Handler) deletePostHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := h.service.PostsService.Delete(ctx, postId); err != nil {
-		handleServiceError(w, r, err)
+		HandleServiceError(w, r, err)
 		return
 	}
 
@@ -101,27 +100,13 @@ func (h *Handler) updatePostHandler(w http.ResponseWriter, r *http.Request) {
 
 	post, err := h.service.PostsService.Update(ctx, postID, req)
 	if err != nil {
-		handleServiceError(w, r, err)
+		HandleServiceError(w, r, err)
 		return
 	}
 
 	if err := config.ResponseJSON(w, http.StatusOK, post); err != nil {
 		InternalServerError(w, r, err)
 		return
-	}
-}
-
-func handleServiceError(w http.ResponseWriter, r *http.Request, err error) {
-	var notFoundErr *domain.NotFoundError
-	var conflictErr *domain.ConflictError
-
-	switch {
-	case errors.As(err, &notFoundErr):
-		NotFoundError(w, r, err)
-	case errors.As(err, &conflictErr):
-		ConflictError(w, r, err)
-	default:
-		InternalServerError(w, r, err)
 	}
 }
 
