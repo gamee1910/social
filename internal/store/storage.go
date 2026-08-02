@@ -9,7 +9,7 @@ import (
 )
 
 var (
-	ErrNotFound        = errors.New("resources not found")
+	ErrNotFound        = errors.New("resource not found")
 	ErrVersionConflict = errors.New("version conflict")
 )
 

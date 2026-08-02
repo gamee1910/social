@@ -19,7 +19,7 @@ func BadRequestError(w http.ResponseWriter, r *http.Request, err error) {
 
 func NotFoundError(w http.ResponseWriter, r *http.Request, err error) {
 	log.Printf("not found error: [%s] - path: [%s] - error: [%s]", r.Method, r.URL.Path, err)
-	_ = config.ResponseJSONError(w, http.StatusNotFound, "resource not found")
+	_ = config.ResponseJSONError(w, http.StatusNotFound, err.Error())
 }
 
 func ConflictError(w http.ResponseWriter, r *http.Request, err error) {

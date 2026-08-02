@@ -47,12 +47,7 @@ func (h *Handler) getPostHandler(w http.ResponseWriter, r *http.Request) {
 
 	post, err := h.service.PostsService.GetByIdWithComments(ctx, postId)
 	if err != nil {
-		switch {
-		case errors.Is(err, domain.ErrNotFound):
-			NotFoundError(w, r, err)
-		default:
-			InternalServerError(w, r, err)
-		}
+		handleServiceError(w, r, err)
 		return
 	}
 
@@ -72,12 +67,7 @@ func (h *Handler) deletePostHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := h.service.PostsService.Delete(ctx, postId); err != nil {
-		if errors.Is(err, domain.ErrNotFound) {
-			NotFoundError(w, r, err)
-			return
-		}
-
-		InternalServerError(w, r, err)
+		handleServiceError(w, r, err)
 		return
 	}
 
@@ -111,22 +101,27 @@ func (h *Handler) updatePostHandler(w http.ResponseWriter, r *http.Request) {
 
 	post, err := h.service.PostsService.Update(ctx, postID, req)
 	if err != nil {
-		switch {
-		case errors.Is(err, domain.ErrNotFound):
-			NotFoundError(w, r, err)
-
-		case errors.Is(err, domain.ErrVersionConflict):
-			ConflictError(w, r, err)
-
-		default:
-			InternalServerError(w, r, err)
-		}
+		handleServiceError(w, r, err)
 		return
 	}
 
 	if err := config.ResponseJSON(w, http.StatusOK, post); err != nil {
 		InternalServerError(w, r, err)
 		return
+	}
+}
+
+func handleServiceError(w http.ResponseWriter, r *http.Request, err error) {
+	var notFoundErr *domain.NotFoundError
+	var conflictErr *domain.ConflictError
+
+	switch {
+	case errors.As(err, &notFoundErr):
+		NotFoundError(w, r, err)
+	case errors.As(err, &conflictErr):
+		ConflictError(w, r, err)
+	default:
+		InternalServerError(w, r, err)
 	}
 }
 

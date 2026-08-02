@@ -40,7 +40,7 @@ func (ps *PostService) Create(ctx context.Context, req dto.CreatePostRequest) (*
 func (ps *PostService) GetById(ctx context.Context, postID int64) (*entity.Post, error) {
 	post, err := ps.postStore.GetById(ctx, postID)
 	if err != nil {
-		return nil, translateError(err)
+		return nil, translatePostError(err)
 	}
 	return post, nil
 }
@@ -48,7 +48,7 @@ func (ps *PostService) GetById(ctx context.Context, postID int64) (*entity.Post,
 func (ps *PostService) GetByIdWithComments(ctx context.Context, postID int64) (*entity.Post, error) {
 	post, err := ps.postStore.GetById(ctx, postID)
 	if err != nil {
-		return nil, translateError(err)
+		return nil, translatePostError(err)
 	}
 
 	comments, err := ps.commentStore.GetByPostId(ctx, post.ID)
@@ -62,7 +62,7 @@ func (ps *PostService) GetByIdWithComments(ctx context.Context, postID int64) (*
 
 func (ps *PostService) Delete(ctx context.Context, postID int64) error {
 	if err := ps.postStore.Delete(ctx, postID); err != nil {
-		return translateError(err)
+		return translatePostError(err)
 	}
 	return nil
 }
@@ -70,7 +70,7 @@ func (ps *PostService) Delete(ctx context.Context, postID int64) error {
 func (ps *PostService) Update(ctx context.Context, postID int64, req dto.UpdatePostRequest) (*entity.Post, error) {
 	post, err := ps.postStore.GetById(ctx, postID)
 	if err != nil {
-		return nil, translateError(err)
+		return nil, translatePostError(err)
 	}
 
 	if req.Title != nil {
@@ -87,20 +87,18 @@ func (ps *PostService) Update(ctx context.Context, postID int64, req dto.UpdateP
 
 	updatedPost, err := ps.postStore.Update(ctx, postID, post)
 	if err != nil {
-		return nil, translateError(err)
+		return nil, translatePostError(err)
 	}
 
 	return updatedPost, nil
 }
 
-// translateError converts store-level errors to domain-level errors.
-// This keeps the handler layer from knowing about the store package.
-func translateError(err error) error {
+func translatePostError(err error) error {
 	switch {
 	case errors.Is(err, store.ErrNotFound):
-		return domain.ErrNotFound
+		return &domain.NotFoundError{Resource: "post"}
 	case errors.Is(err, store.ErrVersionConflict):
-		return domain.ErrVersionConflict
+		return &domain.ConflictError{Resource: "post"}
 	default:
 		return err
 	}
