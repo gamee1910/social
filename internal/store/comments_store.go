@@ -4,13 +4,16 @@ import (
 	"context"
 	"database/sql"
 	"log"
-	"time"
 
 	"github.com/gamee1910/social/internal/domain/entity"
 )
 
 type CommentsStore struct {
 	db *sql.DB
+}
+
+func NewCommentsStore(db *sql.DB) *CommentsStore {
+	return &CommentsStore{db: db}
 }
 
 func (store *CommentsStore) GetByPostId(ctx context.Context, postId int64) ([]entity.Comment, error) {
@@ -29,11 +32,11 @@ func (store *CommentsStore) GetByPostId(ctx context.Context, postId int64) ([]en
 	defer func(rows *sql.Rows) {
 		err := rows.Close()
 		if err != nil {
-			log.Printf("Get Post By Id error date time [%s]", time.DateTime)
+			log.Printf("failed to close rows: [%v]", err)
 		}
 	}(rows)
 
-	var comments []entity.Comment
+	comments := make([]entity.Comment, 0)
 
 	for rows.Next() {
 		var cmt entity.Comment
@@ -54,6 +57,10 @@ func (store *CommentsStore) GetByPostId(ctx context.Context, postId int64) ([]en
 		}
 
 		comments = append(comments, cmt)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
 	}
 
 	return comments, nil

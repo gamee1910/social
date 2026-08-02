@@ -68,3 +68,10 @@ func ResponseJSONError(w http.ResponseWriter, status int, message string) error 
 	}
 	return WriteJSON(w, status, &envelop{Error: message})
 }
+
+func ResponseJSON(w http.ResponseWriter, status int, data any) error {
+	type responseJSON struct {
+		Data any `json:"data"`
+	}
+	return WriteJSON(w, status, &responseJSON{Data: data})
+}

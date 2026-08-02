@@ -9,7 +9,8 @@ import (
 	"github.com/gamee1910/social/internal/config"
 	"github.com/gamee1910/social/internal/db"
 	"github.com/gamee1910/social/internal/env"
-	"github.com/gamee1910/social/internal/interfaces/routes"
+	"github.com/gamee1910/social/internal/routes"
+	"github.com/gamee1910/social/internal/service"
 	"github.com/gamee1910/social/internal/store"
 	"github.com/gamee1910/social/pkg/logger"
 )
@@ -47,7 +48,9 @@ func main() {
 
 	storage := store.NewStorage(database)
 
-	handler := routes.NewHandler(cfg, storage, appLogger)
+	service := service.NewService(storage)
+
+	handler := routes.NewHandler(cfg, service, appLogger)
 
 	appLogger.Info("starting server", "addr", cfg.Addr, "env", cfg.Env)
 

@@ -11,6 +11,10 @@ type UsersStore struct {
 	db *sql.DB
 }
 
+func NewUsersStore(db *sql.DB) *UsersStore {
+	return &UsersStore{db: db}
+}
+
 func (users *UsersStore) Create(ctx context.Context, user *entity.User) error {
 	query := `INSERT INTO users(username, email, password) VALUES ($1, $2, $3) RETURNING id, created_at`
 

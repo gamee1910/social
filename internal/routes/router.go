@@ -4,7 +4,6 @@ import (
 	"net/http"
 
 	"github.com/gamee1910/social/internal/config"
-	"github.com/gamee1910/social/internal/domain"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 )
@@ -41,6 +40,7 @@ func (h *Handler) healthCheck(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := config.WriteJSON(w, http.StatusOK, data); err != nil {
-		domain.InternalServerError(w, r, err)
+		InternalServerError(w, r, err)
 	}
 }
+

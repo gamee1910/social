@@ -9,30 +9,35 @@ import (
 )
 
 var (
-	ErrNotFound = errors.New("resources not found")
+	ErrNotFound        = errors.New("resources not found")
+	ErrVersionConflict = errors.New("version conflict")
 )
 
-type Storage struct {
-	Users interface {
-		Create(ctx context.Context, user *entity.User) error
-	}
-
-	Posts interface {
-		Create(ctx context.Context, post *entity.Post) error
-		GetById(ctx context.Context, postId int64) (*entity.Post, error)
-		Delete(ctx context.Context, postId int64) error
-		Update(ctx context.Context, postId int64, post *entity.Post) (*entity.Post, error)
-	}
-
-	Comments interface {
-		GetByPostId(ctx context.Context, postId int64) ([]entity.Comment, error)
-	}
+type UserRepository interface {
+	Create(ctx context.Context, user *entity.User) error
 }
 
-func NewStorage(db *sql.DB) Storage {
-	return Storage{
-		Posts:    &PostsStore{db},
-		Users:    &UsersStore{db},
-		Comments: &CommentsStore{db},
+type PostRepository interface {
+	Create(ctx context.Context, post *entity.Post) error
+	GetById(ctx context.Context, postId int64) (*entity.Post, error)
+	Delete(ctx context.Context, postId int64) error
+	Update(ctx context.Context, postId int64, post *entity.Post) (*entity.Post, error)
+}
+
+type CommentRepository interface {
+	GetByPostId(ctx context.Context, postId int64) ([]entity.Comment, error)
+}
+
+type Storage struct {
+	Users    UserRepository
+	Posts    PostRepository
+	Comments CommentRepository
+}
+
+func NewStorage(db *sql.DB) *Storage {
+	return &Storage{
+		Posts:    NewPostsStore(db),
+		Users:    NewUsersStore(db),
+		Comments: NewCommentsStore(db),
 	}
 }

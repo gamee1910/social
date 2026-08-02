@@ -15,11 +15,15 @@ type PostsStore struct {
 	db *sql.DB
 }
 
+func NewPostsStore(db *sql.DB) *PostsStore {
+	return &PostsStore{db: db}
+}
+
 func (store *PostsStore) Create(ctx context.Context, post *entity.Post) error {
 	query := `
 		INSERT INTO posts(content, title, user_id, tags)
 		VALUES ($1, $2, $3, $4)
-		RETURNING id, created_at, updated_at
+		RETURNING id, created_at, updated_at, version
 	`
 
 	err := store.db.QueryRowContext(
@@ -28,6 +32,7 @@ func (store *PostsStore) Create(ctx context.Context, post *entity.Post) error {
 		&post.ID,
 		&post.CreatedAt,
 		&post.UpdatedAt,
+		&post.Version,
 	)
 
 	if err != nil {
@@ -39,7 +44,7 @@ func (store *PostsStore) Create(ctx context.Context, post *entity.Post) error {
 
 func (store *PostsStore) GetById(ctx context.Context, postId int64) (*entity.Post, error) {
 	query := `
-		SELECT id, user_id, title, content, tags, created_at, updated_at
+		SELECT id, user_id, title, content, tags, version, created_at, updated_at
 		FROM posts
 		WHERE id = $1
 	`
@@ -53,6 +58,7 @@ func (store *PostsStore) GetById(ctx context.Context, postId int64) (*entity.Pos
 			&post.Title,
 			&post.Content,
 			pq.Array(&post.Tags),
+			&post.Version,
 			&post.CreatedAt,
 			&post.UpdatedAt,
 		)
@@ -68,6 +74,7 @@ func (store *PostsStore) GetById(ctx context.Context, postId int64) (*entity.Pos
 
 	return &post, nil
 }
+
 func (store *PostsStore) Delete(ctx context.Context, postID int64) error {
 	tx, err := store.db.BeginTx(ctx, nil)
 	if err != nil {
@@ -124,49 +131,51 @@ func (store *PostsStore) Update(ctx context.Context, postId int64, post *entity.
 	}
 
 	defer func() {
-		if err := tx.Rollback(); err != nil && errors.Is(err, sql.ErrTxDone) {
+		if err := tx.Rollback(); err != nil && !errors.Is(err, sql.ErrTxDone) {
 			log.Printf("rollback failed: %v", err)
 		}
 	}()
 
-	var existingID int64
-	checkQuery := `SELECT id FROM posts WHERE id = $1`
-	err = tx.QueryRowContext(ctx, checkQuery, postId).Scan(&existingID)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, ErrNotFound
-		}
-		return nil, fmt.Errorf("check post existence: %w", err)
-	}
-
-	updateQuery := `
-		UPDATE posts
-		SET title = $1, content = $2, tags = $3, updated_at = NOW()
-		WHERE id = $4
-		RETURNING id, user_id, title, content, tags, created_at, updated_at
+	query := `
+		UPDATE posts SET title = $1, content = $2, tags = $3, version = version + 1, updated_at = NOW()
+		WHERE id = $4 AND version = $5
+		RETURNING id, user_id, title, content, tags, version, created_at, updated_at
 	`
 
-	var updatePost entity.Post
+	var updatedPost entity.Post
+
 	err = tx.QueryRowContext(
 		ctx,
-		updateQuery,
+		query,
 		post.Title,
 		post.Content,
 		pq.Array(post.Tags),
 		postId,
+		post.Version,
 	).Scan(
-		&updatePost.ID,
-		&updatePost.UserId,
-		&updatePost.Title,
-		&updatePost.Content,
-		pq.Array(&updatePost.Tags),
-		&updatePost.CreatedAt,
-		&updatePost.UpdatedAt,
+		&updatedPost.ID,
+		&updatedPost.UserId,
+		&updatedPost.Title,
+		&updatedPost.Content,
+		pq.Array(&updatedPost.Tags),
+		&updatedPost.Version,
+		&updatedPost.CreatedAt,
+		&updatedPost.UpdatedAt,
 	)
 
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, ErrNotFound
+			var exists bool
+			err = tx.QueryRowContext(ctx, `SELECT EXISTS(SELECT 1 FROM posts WHERE id = $1)`, postId).Scan(&exists)
+			if err != nil {
+				return nil, fmt.Errorf("check post existence: %w", err)
+			}
+
+			if !exists {
+				return nil, ErrNotFound
+			}
+
+			return nil, ErrVersionConflict
 		}
 		return nil, fmt.Errorf("update post: %w", err)
 	}
@@ -175,5 +184,5 @@ func (store *PostsStore) Update(ctx context.Context, postId int64, post *entity.
 		return nil, fmt.Errorf("commit transaction: %w", err)
 	}
 
-	return &updatePost, nil
+	return &updatedPost, nil
 }
