@@ -9,7 +9,6 @@ import (
 	"github.com/gamee1910/social/internal/config"
 	"github.com/gamee1910/social/internal/env"
 	"github.com/gamee1910/social/internal/routes"
-	"github.com/gamee1910/social/internal/seeder"
 	"github.com/gamee1910/social/internal/service"
 	"github.com/gamee1910/social/internal/store"
 	"github.com/gamee1910/social/pkg/logger"
@@ -52,13 +51,6 @@ func main() {
 	svc := service.NewService(storage)
 
 	handler := routes.NewHandler(cfg, svc, appLogger)
-
-	if cfg.Env == "development" {
-		seed := seeder.NewSeed(database)
-		if err := seed.Run(); err != nil {
-			log.Fatal(err)
-		}
-	}
 
 	appLogger.Infof(
 		"starting server port=%s env=%s",

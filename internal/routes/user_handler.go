@@ -13,18 +13,18 @@ func (h *Handler) getUserById(w http.ResponseWriter, r *http.Request) {
 
 	id, err := getIDFromParameter(userIDKey, r)
 	if err != nil {
-		BadRequestError(w, r, err)
+		utils.BadRequestError(w, r, err)
 		return
 	}
 
 	user, err := h.service.UserService.GetById(ctx, id)
 	if err != nil {
-		HandleServiceError(w, r, err)
+		utils.HandleServiceError(w, r, err)
 		return
 	}
 
 	if err := utils.ResponseJSON(w, http.StatusOK, user); err != nil {
-		InternalServerError(w, r, err)
+		utils.InternalServerError(w, r, err)
 		return
 	}
 }

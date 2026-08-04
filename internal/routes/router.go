@@ -45,7 +45,7 @@ func (h *Handler) healthCheck(w http.ResponseWriter, r *http.Request) {
 		"version": version,
 	}
 
-	if err := utils.WriteJSON(w, http.StatusOK, data); err != nil {
-		InternalServerError(w, r, err)
+	if err := utils.ResponseJSON(w, http.StatusOK, data); err != nil {
+		utils.InternalServerError(w, r, err)
 	}
 }
