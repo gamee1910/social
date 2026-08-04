@@ -5,27 +5,27 @@ import (
 	"net/http"
 
 	"github.com/gamee1910/social/internal/domain"
-	"github.com/gamee1910/social/internal/httputil"
+	"github.com/gamee1910/social/internal/utils"
 )
 
 func InternalServerError(w http.ResponseWriter, r *http.Request, err error) {
-	_ = httputil.ResponseJSONError(w, http.StatusInternalServerError, "the server encountered a problem")
+	_ = utils.ResponseJSONError(w, http.StatusInternalServerError, "the server encountered a problem")
 }
 
 func BadRequestError(w http.ResponseWriter, r *http.Request, err error) {
-	_ = httputil.ResponseJSONError(w, http.StatusBadRequest, err.Error())
+	_ = utils.ResponseJSONError(w, http.StatusBadRequest, err.Error())
 }
 
 func NotFoundError(w http.ResponseWriter, r *http.Request, err error) {
-	_ = httputil.ResponseJSONError(w, http.StatusNotFound, err.Error())
+	_ = utils.ResponseJSONError(w, http.StatusNotFound, err.Error())
 }
 
 func ConflictError(w http.ResponseWriter, r *http.Request, err error) {
-	_ = httputil.ResponseJSONError(w, http.StatusConflict, err.Error())
+	_ = utils.ResponseJSONError(w, http.StatusConflict, err.Error())
 }
 
 func ResponseValidationError(w http.ResponseWriter, r *http.Request, err map[string]string) {
-	_ = httputil.WriteJSON(w, http.StatusBadRequest, err)
+	_ = utils.WriteJSON(w, http.StatusBadRequest, err)
 }
 
 func HandleServiceError(w http.ResponseWriter, r *http.Request, err error) {
