@@ -8,7 +8,7 @@ import (
 	"github.com/gamee1910/social/internal/domain/entity"
 	"github.com/gamee1910/social/internal/domain/repository"
 	"github.com/gamee1910/social/internal/domain/service"
-	"github.com/gamee1910/social/internal/dto"
+	"github.com/gamee1910/social/internal/interfaces/http/transport/request"
 )
 
 type postService struct {
@@ -23,7 +23,7 @@ func NewPostService(postRepo repository.PostRepository, commentRepo repository.C
 	}
 }
 
-func (ps *postService) Create(ctx context.Context, req dto.CreatePostRequest) (*entity.Post, error) {
+func (ps *postService) Create(ctx context.Context, req request.CreatePostRequest) (*entity.Post, error) {
 	post := &entity.Post{
 		Title:   req.Title,
 		Content: req.Content,
@@ -68,7 +68,7 @@ func (ps *postService) Delete(ctx context.Context, postID int64) error {
 	return nil
 }
 
-func (ps *postService) Update(ctx context.Context, postID int64, req dto.UpdatePostRequest) (*entity.Post, error) {
+func (ps *postService) Update(ctx context.Context, postID int64, req request.UpdatePostRequest) (*entity.Post, error) {
 	post, err := ps.postRepository.GetById(ctx, postID)
 	if err != nil {
 		return nil, translatePostError(err)

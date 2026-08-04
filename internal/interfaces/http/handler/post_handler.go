@@ -5,7 +5,8 @@ import (
 	"net/http"
 
 	"github.com/gamee1910/social/internal/domain/service"
-	"github.com/gamee1910/social/internal/dto"
+	"github.com/gamee1910/social/internal/interfaces/http/transport/request"
+
 	"github.com/gamee1910/social/internal/utils"
 	"github.com/gamee1910/social/pkg/logger"
 )
@@ -25,7 +26,7 @@ func NewPostHandler(postService service.PostService, logger *logger.Logger) *Pos
 const postIDKey string = "postId"
 
 func (h *PostHandler) CreatePostHandler(w http.ResponseWriter, r *http.Request) {
-	var req dto.CreatePostRequest
+	var req request.CreatePostRequest
 
 	if err := utils.ReadJSON(w, r, &req); err != nil {
 		utils.BadRequestError(w, r, err)
@@ -95,7 +96,7 @@ func (h *PostHandler) UpdatePostHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	var req dto.UpdatePostRequest
+	var req request.UpdatePostRequest
 	if err := utils.ReadJSON(w, r, &req); err != nil {
 		utils.BadRequestError(w, r, err)
 		return
