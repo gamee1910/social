@@ -1,16 +1,30 @@
-package routes
+package handler
 
 import (
 	"errors"
 	"net/http"
 
+	"github.com/gamee1910/social/internal/domain/service"
 	"github.com/gamee1910/social/internal/dto"
 	"github.com/gamee1910/social/internal/utils"
+	"github.com/gamee1910/social/pkg/logger"
 )
+
+type PostHandler struct {
+	postService service.PostService
+	logger      *logger.Logger
+}
+
+func NewPostHandler(postService service.PostService, logger *logger.Logger) *PostHandler {
+	return &PostHandler{
+		postService: postService,
+		logger:      logger,
+	}
+}
 
 const postIDKey string = "postId"
 
-func (h *Handler) createPostHandler(w http.ResponseWriter, r *http.Request) {
+func (h *PostHandler) CreatePostHandler(w http.ResponseWriter, r *http.Request) {
 	var req dto.CreatePostRequest
 
 	if err := utils.ReadJSON(w, r, &req); err != nil {
@@ -23,7 +37,7 @@ func (h *Handler) createPostHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	post, err := h.service.PostsService.Create(r.Context(), req)
+	post, err := h.postService.Create(r.Context(), req)
 	if err != nil {
 		utils.InternalServerError(w, r, err)
 		return
@@ -34,16 +48,16 @@ func (h *Handler) createPostHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (h *Handler) getPostHandler(w http.ResponseWriter, r *http.Request) {
+func (h *PostHandler) GetPostHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	postId, err := getIDFromParameter(postIDKey, r)
+	postId, err := utils.GetIDFromParameter(postIDKey, r)
 	if err != nil {
 		utils.BadRequestError(w, r, err)
 		return
 	}
 
-	post, err := h.service.PostsService.GetByIdWithComments(ctx, postId)
+	post, err := h.postService.GetByIdWithComments(ctx, postId)
 	if err != nil {
 		utils.HandleServiceError(w, r, err)
 		return
@@ -55,16 +69,16 @@ func (h *Handler) getPostHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (h *Handler) deletePostHandler(w http.ResponseWriter, r *http.Request) {
+func (h *PostHandler) DeletePostHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	postId, err := getIDFromParameter(postIDKey, r)
+	postId, err := utils.GetIDFromParameter(postIDKey, r)
 	if err != nil {
 		utils.BadRequestError(w, r, err)
 		return
 	}
 
-	if err := h.service.PostsService.Delete(ctx, postId); err != nil {
+	if err := h.postService.Delete(ctx, postId); err != nil {
 		utils.HandleServiceError(w, r, err)
 		return
 	}
@@ -72,10 +86,10 @@ func (h *Handler) deletePostHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
-func (h *Handler) updatePostHandler(w http.ResponseWriter, r *http.Request) {
+func (h *PostHandler) UpdatePostHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	id, err := getIDFromParameter(postIDKey, r)
+	id, err := utils.GetIDFromParameter(postIDKey, r)
 	if err != nil {
 		utils.BadRequestError(w, r, err)
 		return
@@ -97,7 +111,7 @@ func (h *Handler) updatePostHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	post, err := h.service.PostsService.Update(ctx, id, req)
+	post, err := h.postService.Update(ctx, id, req)
 	if err != nil {
 		utils.HandleServiceError(w, r, err)
 		return
@@ -108,3 +122,24 @@ func (h *Handler) updatePostHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 }
+
+// func (h *Handler) getUserById(w http.ResponseWriter, r *http.Request) {
+// 	ctx := r.Context()
+
+// 	id, err := getIDFromParameter(userIDKey, r)
+// 	if err != nil {
+// 		utils.BadRequestError(w, r, err)
+// 		return
+// 	}
+
+// 	user, err := h.service.UserService.GetById(ctx, id)
+// 	if err != nil {
+// 		utils.HandleServiceError(w, r, err)
+// 		return
+// 	}
+
+// 	if err := utils.ResponseJSON(w, http.StatusOK, user); err != nil {
+// 		utils.InternalServerError(w, r, err)
+// 		return
+// 	}
+// }

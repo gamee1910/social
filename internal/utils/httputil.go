@@ -3,9 +3,12 @@ package utils
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/gamee1910/social/internal/domain"
+	"github.com/go-chi/chi/v5"
 )
 
 func writeJSON(w http.ResponseWriter, status int, data any) error {
@@ -67,4 +70,14 @@ func HandleServiceError(w http.ResponseWriter, r *http.Request, err error) {
 	default:
 		InternalServerError(w, r, err)
 	}
+}
+func GetIDFromParameter(value string, r *http.Request) (int64, error) {
+	id := chi.URLParam(r, value)
+
+	valueFromParam, err := strconv.ParseInt(id, 10, 64)
+	if err != nil {
+		return 0, fmt.Errorf("invalid id: %w", err)
+	}
+
+	return valueFromParam, nil
 }

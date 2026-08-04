@@ -1,4 +1,4 @@
-package store
+package postgres
 
 import (
 	"context"
@@ -6,21 +6,23 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/gamee1910/social/internal/config"
 	"github.com/gamee1910/social/internal/domain"
 	"github.com/gamee1910/social/internal/domain/entity"
+	"github.com/gamee1910/social/internal/domain/repository"
 	"github.com/lib/pq"
 )
 
-type PostsStore struct {
+type postRepository struct {
 	db *sql.DB
 }
 
-func NewPostsStore(db *sql.DB) *PostsStore {
-	return &PostsStore{db: db}
+func NewPostRepository(db *sql.DB) repository.PostRepository {
+	return &postRepository{db: db}
 }
 
-func (store *PostsStore) Create(ctx context.Context, post *entity.Post) error {
-	ctx, cancel := context.WithTimeout(ctx, QueryTimeoutDuration)
+func (postRepo *postRepository) Create(ctx context.Context, post *entity.Post) error {
+	ctx, cancel := context.WithTimeout(ctx, config.QueryTimeoutDuration)
 	defer cancel()
 
 	query := `
@@ -29,7 +31,7 @@ func (store *PostsStore) Create(ctx context.Context, post *entity.Post) error {
 		RETURNING id, created_at, updated_at, version
 	`
 
-	err := store.db.QueryRowContext(
+	err := postRepo.db.QueryRowContext(
 		ctx, query, post.Content, post.Title, post.UserId, pq.Array(post.Tags),
 	).Scan(
 		&post.ID,
@@ -45,8 +47,8 @@ func (store *PostsStore) Create(ctx context.Context, post *entity.Post) error {
 	return nil
 }
 
-func (store *PostsStore) GetById(ctx context.Context, postId int64) (*entity.Post, error) {
-	ctx, cancel := context.WithTimeout(ctx, QueryTimeoutDuration)
+func (postRepo *postRepository) GetById(ctx context.Context, postId int64) (*entity.Post, error) {
+	ctx, cancel := context.WithTimeout(ctx, config.QueryTimeoutDuration)
 	defer cancel()
 
 	query := `
@@ -57,7 +59,7 @@ func (store *PostsStore) GetById(ctx context.Context, postId int64) (*entity.Pos
 
 	var post entity.Post
 
-	err := store.db.QueryRowContext(ctx, query, postId).
+	err := postRepo.db.QueryRowContext(ctx, query, postId).
 		Scan(
 			&post.ID,
 			&post.UserId,
@@ -78,12 +80,12 @@ func (store *PostsStore) GetById(ctx context.Context, postId int64) (*entity.Pos
 	return &post, nil
 }
 
-func (store *PostsStore) Delete(ctx context.Context, postID int64) error {
+func (postRepo *postRepository) Delete(ctx context.Context, postID int64) error {
 
-	ctx, cancel := context.WithTimeout(ctx, QueryTimeoutDuration)
+	ctx, cancel := context.WithTimeout(ctx, config.QueryTimeoutDuration)
 	defer cancel()
 
-	res, err := store.db.ExecContext(
+	res, err := postRepo.db.ExecContext(
 		ctx,
 		`DELETE FROM posts WHERE id = $1`,
 		postID,
@@ -104,11 +106,11 @@ func (store *PostsStore) Delete(ctx context.Context, postID int64) error {
 	return nil
 }
 
-func (store *PostsStore) Update(ctx context.Context, postId int64, post *entity.Post) (*entity.Post, error) {
-	ctx, cancel := context.WithTimeout(ctx, QueryTimeoutDuration)
+func (postRepo *postRepository) Update(ctx context.Context, postId int64, post *entity.Post) (*entity.Post, error) {
+	ctx, cancel := context.WithTimeout(ctx, config.QueryTimeoutDuration)
 	defer cancel()
 
-	tx, err := store.db.BeginTx(ctx, nil)
+	tx, err := postRepo.db.BeginTx(ctx, nil)
 	if err != nil {
 		return nil, fmt.Errorf("begin transaction error: %w", err)
 	}
