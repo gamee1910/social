@@ -1,64 +1,89 @@
 package main
 
 import (
+	"context"
 	"database/sql"
 	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/gamee1910/social/internal/config"
-
+	"github.com/gamee1910/social/internal/infrastructure/di"
+	"github.com/gamee1910/social/internal/interfaces/http/routes"
 	"github.com/gamee1910/social/pkg/logger"
 )
 
 func main() {
-	cfg := config.Config{
-		Addr: config.GetString("ADDR", ":8080"),
-		Database: config.DatabaseConfig{
-			Addr:               config.GetString("DB_ADDR", "postgres://admin:password@localhost/social?sslmode=disable"),
-			MaxOpenConnections: config.GetInt("DB_MAX_OPEN_CONS", 30),
-			MaxIdleConnections: config.GetInt("DB_MAX_IDLE_CONS", 30),
-			MaxIdleTime:        config.GetString("DB_MAX_IDLE_TIME", "15m"),
-		},
-		Env: config.GetString("ENV", "development"),
-	}
+	cfg := config.Load()
+	log := logger.NewLogger(cfg.Application.Env)
+	defer log.Sync()
 
-	appLogger := logger.NewLogger(cfg.Env)
-	defer appLogger.Sync()
-
-	database, err := config.DatabaseConnection(
-		cfg.Database.Addr,
-		cfg.Database.MaxOpenConnections,
-		cfg.Database.MaxIdleConnections,
-		cfg.Database.MaxIdleTime,
-	)
-
+	db, err := config.DatabaseConnection(cfg)
 	if err != nil {
-		appLogger.Fatal(err)
+		log.Fatal(err)
 	}
+	defer closeDB(db, log)
 
-	defer func(db *sql.DB) {
-		if err := db.Close(); err != nil {
-			appLogger.Error("failed to close database", "error", err)
-		}
-	}(database)
+	container := di.NewContainer(cfg, db, log)
 
-	appLogger.Infof(
-		"starting server port=%s env=%s",
-		cfg.Addr,
-		cfg.Env,
-	)
+	router := routes.SetupRouter(cfg, db, container, log)
 
-	// log.Fatal(run(cfg, handler.Mount()))
-}
-
-func run(cfg config.Config, handler http.Handler) error {
 	server := &http.Server{
-		Addr:         cfg.Addr,
-		Handler:      handler,
-		WriteTimeout: 30 * time.Second,
-		ReadTimeout:  10 * time.Second,
+		Addr:         ":" + cfg.Server.Port,
+		Handler:      router,
+		ReadTimeout:  cfg.Server.ReadTimeout,
+		WriteTimeout: cfg.Server.WriteTimeout,
 		IdleTimeout:  time.Minute,
 	}
 
-	return server.ListenAndServe()
+	go func() {
+		log.Infof(
+			"starting application [%s] port [%s] env [%s]",
+			cfg.Application.Name,
+			cfg.Server.Port,
+			cfg.Application.Env,
+		)
+
+		var err error
+
+		if cfg.Server.TLS.Mode == "enabled" {
+			err = server.ListenAndServeTLS(
+				cfg.Server.TLS.CertFile,
+				cfg.Server.TLS.KeyFile,
+			)
+		} else {
+			err = server.ListenAndServe()
+		}
+
+		if err != nil && err != http.ErrServerClosed {
+			log.Fatal(err)
+		}
+	}()
+	gracefulShutdown(server, log)
+}
+
+func gracefulShutdown(server *http.Server, log *logger.Logger) {
+	stop := make(chan os.Signal, 1)
+	signal.Notify(stop, syscall.SIGINT, syscall.SIGTERM)
+
+	<-stop
+
+	log.Info("shutting down server")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	if err := server.Shutdown(ctx); err != nil {
+		log.Fatal(err)
+	}
+
+	log.Info("server stopped")
+}
+
+func closeDB(db *sql.DB, log *logger.Logger) {
+	if err := db.Close(); err != nil {
+		log.Error("failed to close database", "error", err)
+	}
 }

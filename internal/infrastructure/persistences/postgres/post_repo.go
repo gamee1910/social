@@ -21,30 +21,36 @@ func NewPostRepository(db *sql.DB) repository.PostRepository {
 	return &postRepository{db: db}
 }
 
-func (postRepo *postRepository) Create(ctx context.Context, post *entity.Post) error {
+func (postRepo *postRepository) Create(ctx context.Context, post *entity.Post) (*entity.Post, error) {
 	ctx, cancel := context.WithTimeout(ctx, config.QueryTimeoutDuration)
 	defer cancel()
 
 	query := `
 		INSERT INTO posts(content, title, user_id, tags)
 		VALUES ($1, $2, $3, $4)
-		RETURNING id, created_at, updated_at, version
+		RETURNING id, content, title, user_id, tags, created_at, updated_at, version
 	`
+
+	var result entity.Post
 
 	err := postRepo.db.QueryRowContext(
 		ctx, query, post.Content, post.Title, post.UserId, pq.Array(post.Tags),
 	).Scan(
-		&post.ID,
-		&post.CreatedAt,
-		&post.UpdatedAt,
-		&post.Version,
+		&result.ID,
+		&result.Content,
+		&result.Title,
+		&result.UserId,
+		pq.Array(&result.Tags),
+		&result.CreatedAt,
+		&result.UpdatedAt,
+		&result.Version,
 	)
 
 	if err != nil {
-		return fmt.Errorf("create post: [%w]", err)
+		return nil, fmt.Errorf("create post error: %w", err)
 	}
 
-	return nil
+	return &result, nil
 }
 
 func (postRepo *postRepository) GetById(ctx context.Context, postId int64) (*entity.Post, error) {

@@ -12,13 +12,13 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 )
 
-type RouterDepdencies struct {
-	Config    *config.Config
+type RouterDependencies struct {
+	Config    *config.Configuration
 	Container *di.Container
 	Logger    *logger.Logger
 }
 
-func SetupRouter(cfg *config.Config, db *sql.DB, container *di.Container, logger *logger.Logger) *chi.Mux {
+func SetupRouter(cfg *config.Configuration, db *sql.DB, container *di.Container, logger *logger.Logger) *chi.Mux {
 	r := chi.NewRouter()
 	r.Use(middleware.Recoverer)
 	r.Use(middleware.Logger)
@@ -29,17 +29,25 @@ func SetupRouter(cfg *config.Config, db *sql.DB, container *di.Container, logger
 			utils.InternalServerError(w, r, err)
 			return
 		}
-		logger.Infof("Health check: DB ping success")
+
+		response := map[string]string{
+			"status": "ok",
+		}
+		if err := utils.ResponseJSON(w, http.StatusOK, response); err != nil {
+			logger.Error("Health check: failed to write response", "error", err)
+		}
 	})
 
-	deps := RouterDepdencies{
+	deps := RouterDependencies{
 		Config:    cfg,
 		Container: container,
 		Logger:    logger,
 	}
 
-	r.Route("/v1", func(r chi.Router) {
+	r.Route("/api/v1", func(r chi.Router) {
 		RegisterPostRoutes(r, deps)
+		RegisterUserRoutes(r, deps)
+		RegisterCommentRoutes(r, deps)
 	})
 
 	return r

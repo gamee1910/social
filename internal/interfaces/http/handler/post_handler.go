@@ -23,7 +23,7 @@ func NewPostHandler(postService service.PostService, logger *logger.Logger) *Pos
 	}
 }
 
-const postIDKey string = "postId"
+const postIDKey string = "postID"
 
 func (h *PostHandler) CreatePostHandler(w http.ResponseWriter, r *http.Request) {
 	var req request.CreatePostRequest
@@ -123,24 +123,3 @@ func (h *PostHandler) UpdatePostHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 }
-
-// func (h *Handler) getUserById(w http.ResponseWriter, r *http.Request) {
-// 	ctx := r.Context()
-
-// 	id, err := getIDFromParameter(userIDKey, r)
-// 	if err != nil {
-// 		utils.BadRequestError(w, r, err)
-// 		return
-// 	}
-
-// 	user, err := h.service.UserService.GetById(ctx, id)
-// 	if err != nil {
-// 		utils.HandleServiceError(w, r, err)
-// 		return
-// 	}
-
-// 	if err := utils.ResponseJSON(w, http.StatusOK, user); err != nil {
-// 		utils.InternalServerError(w, r, err)
-// 		return
-// 	}
-// }

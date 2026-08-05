@@ -20,20 +20,24 @@ func NewUserRepository(db *sql.DB) repository.UserRepository {
 	return &userRepository{db: db}
 }
 
-func (userRepo *userRepository) Create(ctx context.Context, user *entity.User) error {
+func (userRepo *userRepository) Create(ctx context.Context, user *entity.User) (*entity.User, error) {
 	ctx, cancel := context.WithTimeout(ctx, config.QueryTimeoutDuration)
 	defer cancel()
 
-	query := `INSERT INTO users(username, email, password) VALUES ($1, $2, $3) RETURNING id, created_at`
+	query := `INSERT INTO users(username, email, password) VALUES ($1, $2, $3) RETURNING id, username, email, created_at`
+
+	var result entity.User
 
 	err := userRepo.db.QueryRowContext(ctx, query, user.Username, user.Email, user.Password).Scan(
-		&user.ID,
-		&user.CreatedAt,
+		&result.ID,
+		&result.Username,
+		&result.Email,
+		&result.CreatedAt,
 	)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	return nil
+	return &result, nil
 
 }
 

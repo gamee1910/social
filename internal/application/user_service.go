@@ -2,12 +2,10 @@ package application
 
 import (
 	"context"
-	"errors"
 
-	"github.com/gamee1910/social/internal/domain"
-	"github.com/gamee1910/social/internal/domain/entity"
 	"github.com/gamee1910/social/internal/domain/repository"
 	"github.com/gamee1910/social/internal/domain/service"
+	"github.com/gamee1910/social/internal/interfaces/http/transport/response"
 )
 
 type userService struct {
@@ -18,21 +16,15 @@ func NewUserService(userRepository repository.UserRepository) service.UserServic
 	return &userService{userRepository: userRepository}
 }
 
-func (us *userService) GetById(ctx context.Context, userID int64) (*entity.User, error) {
+func (us *userService) GetById(ctx context.Context, userID int64) (*response.UserResponse, error) {
 	user, err := us.userRepository.GetById(ctx, userID)
 	if err != nil {
-		return nil, translateUserError(err)
+		return nil, err
 	}
-	return user, nil
-}
-
-func translateUserError(err error) error {
-	switch {
-	case errors.Is(err, domain.ErrNotFound):
-		return &domain.NotFoundError{Resource: "user"}
-	case errors.Is(err, domain.ErrVersionConflict):
-		return &domain.ConflictError{Resource: "user"}
-	default:
-		return err
-	}
+	return &response.UserResponse{
+		ID:        user.ID,
+		Username:  user.Username,
+		Email:     user.Email,
+		CreatedAt: user.CreatedAt,
+	}, nil
 }

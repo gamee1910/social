@@ -3,9 +3,9 @@ package service
 import (
 	"context"
 
-	"github.com/gamee1910/social/internal/domain/entity"
+	"github.com/gamee1910/social/internal/interfaces/http/transport/response"
 )
 
 type UserService interface {
-	GetById(ctx context.Context, userID int64) (*entity.User, error)
+	GetById(ctx context.Context, userID int64) (*response.UserResponse, error)
 }

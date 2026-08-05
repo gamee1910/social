@@ -13,19 +13,29 @@ import (
 )
 
 type Container struct {
-	cfg    *config.Config
+	cfg    *config.Configuration
 	db     *sql.DB
 	logger *logger.Logger
 
 	//Handlers
-	postHandler *handler.PostHandler
+	postHandler    *handler.PostHandler
+	userHandler    *handler.UserHandler
+	commentHandler *handler.CommentHandler
 }
 
 func (c *Container) PostHandler() *handler.PostHandler {
 	return c.postHandler
 }
 
-func NewContainer(cfg *config.Config, db *sql.DB, logger *logger.Logger) *Container {
+func (c *Container) UserHandler() *handler.UserHandler {
+	return c.userHandler
+}
+
+func (c *Container) CommentHandler() *handler.CommentHandler {
+	return c.commentHandler
+}
+
+func NewContainer(cfg *config.Configuration, db *sql.DB, logger *logger.Logger) *Container {
 	c := &Container{
 		cfg:    cfg,
 		db:     db,
@@ -37,13 +47,12 @@ func NewContainer(cfg *config.Config, db *sql.DB, logger *logger.Logger) *Contai
 }
 
 func (c *Container) initializeHandlers() {
-	// v := validator.New()
-
-	//initialize layers
-	repositories := c.initRepsitories()
+	repositories := c.initRepositories()
 	services := c.initServices(repositories)
 
 	c.postHandler = handler.NewPostHandler(services.postService, c.logger)
+	c.userHandler = handler.NewUserHandler(services.userService, c.logger)
+	c.commentHandler = handler.NewCommentHandler(services.commentService, c.logger)
 }
 
 type repositories struct {
@@ -52,7 +61,7 @@ type repositories struct {
 	commentRepository repository.CommentRepository
 }
 
-func (c *Container) initRepsitories() repositories {
+func (c *Container) initRepositories() repositories {
 	return repositories{
 		userRepository:    postgres.NewUserRepository(c.db),
 		postRepository:    postgres.NewPostRepository(c.db),
