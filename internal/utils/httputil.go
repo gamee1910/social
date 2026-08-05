@@ -3,9 +3,13 @@ package utils
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
+	"log/slog"
 	"net/http"
+	"strconv"
 
 	"github.com/gamee1910/social/internal/domain"
+	"github.com/go-chi/chi/v5"
 )
 
 func writeJSON(w http.ResponseWriter, status int, data any) error {
@@ -14,10 +18,13 @@ func writeJSON(w http.ResponseWriter, status int, data any) error {
 	return json.NewEncoder(w).Encode(data)
 }
 
+// ReadJSON decodes a JSON request body into data.
+// w is required by http.MaxBytesReader to enforce the body size limit.
 func ReadJSON(w http.ResponseWriter, r *http.Request, data any) error {
-	maxBytes := 1_048_578 // 1 MegaByte
+	maxBytes := 1 << 20 // 1 MiB
 	r.Body = http.MaxBytesReader(w, r.Body, int64(maxBytes))
 	decoder := json.NewDecoder(r.Body)
+	decoder.DisallowUnknownFields()
 	return decoder.Decode(data)
 }
 
@@ -36,6 +43,11 @@ func ResponseJSON(w http.ResponseWriter, status int, data any) error {
 }
 
 func InternalServerError(w http.ResponseWriter, r *http.Request, err error) {
+	slog.ErrorContext(r.Context(), "internal server error",
+		"error", err,
+		"method", r.Method,
+		"path", r.URL.Path,
+	)
 	_ = ResponseJSONError(w, http.StatusInternalServerError, "the server encountered a problem")
 }
 
@@ -56,15 +68,23 @@ func ResponseValidationError(w http.ResponseWriter, r *http.Request, err map[str
 }
 
 func HandleServiceError(w http.ResponseWriter, r *http.Request, err error) {
-	var notFoundErr *domain.NotFoundError
-	var conflictErr *domain.ConflictError
-
 	switch {
-	case errors.As(err, &notFoundErr):
+	case errors.Is(err, domain.ErrNotFound):
 		NotFoundError(w, r, err)
-	case errors.As(err, &conflictErr):
+	case errors.Is(err, domain.ErrVersionConflict):
 		ConflictError(w, r, err)
 	default:
 		InternalServerError(w, r, err)
 	}
+}
+
+func GetIDFromParameter(value string, r *http.Request) (int64, error) {
+	id := chi.URLParam(r, value)
+
+	valueFromParam, err := strconv.ParseInt(id, 10, 64)
+	if err != nil {
+		return 0, fmt.Errorf("invalid id: %w", err)
+	}
+
+	return valueFromParam, nil
 }

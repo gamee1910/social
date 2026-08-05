@@ -1,4 +1,4 @@
-package dto
+package request
 
 type CreatePostRequest struct {
 	Title   string   `json:"title" validate:"required,max=200"`

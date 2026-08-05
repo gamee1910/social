@@ -1,22 +1,24 @@
-package store
+package postgres
 
 import (
 	"context"
 	"database/sql"
 
+	"github.com/gamee1910/social/internal/config"
 	"github.com/gamee1910/social/internal/domain/entity"
+	"github.com/gamee1910/social/internal/domain/repository"
 )
 
-type CommentsStore struct {
+type commentRepository struct {
 	db *sql.DB
 }
 
-func NewCommentsStore(db *sql.DB) *CommentsStore {
-	return &CommentsStore{db: db}
+func NewCommentRepository(db *sql.DB) repository.CommentRepository {
+	return &commentRepository{db: db}
 }
 
-func (store *CommentsStore) GetByPostId(ctx context.Context, postId int64) ([]entity.Comment, error) {
-	ctx, cancel := context.WithTimeout(ctx, QueryTimeoutDuration)
+func (commentRepo *commentRepository) GetByPostId(ctx context.Context, postId int64) ([]entity.Comment, error) {
+	ctx, cancel := context.WithTimeout(ctx, config.QueryTimeoutDuration)
 	defer cancel()
 
 	query := `
@@ -26,7 +28,7 @@ func (store *CommentsStore) GetByPostId(ctx context.Context, postId int64) ([]en
 		ORDER BY c.created_at DESC
 	`
 
-	rows, err := store.db.QueryContext(ctx, query, postId)
+	rows, err := commentRepo.db.QueryContext(ctx, query, postId)
 	if err != nil {
 		return nil, err
 	}
