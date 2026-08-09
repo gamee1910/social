@@ -48,6 +48,7 @@ func SetupRouter(cfg *config.Configuration, db *sql.DB, container *di.Container,
 		RegisterPostRoutes(r, deps)
 		RegisterUserRoutes(r, deps)
 		RegisterCommentRoutes(r, deps)
+		RegisterFollowRoutes(r, deps)
 	})
 
 	return r

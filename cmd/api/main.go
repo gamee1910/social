@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"net/http"
 	"os"
 	"os/signal"
@@ -57,7 +58,7 @@ func main() {
 			err = server.ListenAndServe()
 		}
 
-		if err != nil && err != http.ErrServerClosed {
+		if err != nil && !errors.Is(err, http.ErrServerClosed) {
 			log.Fatal(err)
 		}
 	}()

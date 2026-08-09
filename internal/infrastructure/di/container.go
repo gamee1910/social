@@ -18,9 +18,10 @@ type Container struct {
 	logger *logger.Logger
 
 	//Handlers
-	postHandler    *handler.PostHandler
-	userHandler    *handler.UserHandler
-	commentHandler *handler.CommentHandler
+	postHandler     *handler.PostHandler
+	userHandler     *handler.UserHandler
+	commentHandler  *handler.CommentHandler
+	followerHandler *handler.FollowerHandler
 }
 
 func (c *Container) PostHandler() *handler.PostHandler {
@@ -33,6 +34,10 @@ func (c *Container) UserHandler() *handler.UserHandler {
 
 func (c *Container) CommentHandler() *handler.CommentHandler {
 	return c.commentHandler
+}
+
+func (c *Container) FollowerHandler() *handler.FollowerHandler {
+	return c.followerHandler
 }
 
 func NewContainer(cfg *config.Configuration, db *sql.DB, logger *logger.Logger) *Container {
@@ -53,32 +58,37 @@ func (c *Container) initializeHandlers() {
 	c.postHandler = handler.NewPostHandler(services.postService, c.logger)
 	c.userHandler = handler.NewUserHandler(services.userService, c.logger)
 	c.commentHandler = handler.NewCommentHandler(services.commentService, c.logger)
+	c.followerHandler = handler.NewFollowerHandler(services.followerService)
 }
 
 type repositories struct {
-	userRepository    repository.UserRepository
-	postRepository    repository.PostRepository
-	commentRepository repository.CommentRepository
+	userRepository     repository.UserRepository
+	postRepository     repository.PostRepository
+	commentRepository  repository.CommentRepository
+	followerRepository repository.FollowerRepository
 }
 
 func (c *Container) initRepositories() repositories {
 	return repositories{
-		userRepository:    postgres.NewUserRepository(c.db),
-		postRepository:    postgres.NewPostRepository(c.db),
-		commentRepository: postgres.NewCommentRepository(c.db),
+		userRepository:     postgres.NewUserRepository(c.db, c.logger),
+		postRepository:     postgres.NewPostRepository(c.db, c.logger),
+		commentRepository:  postgres.NewCommentRepository(c.db, c.logger),
+		followerRepository: postgres.NewFollowerRepository(c.db, c.logger),
 	}
 }
 
 type services struct {
-	userService    service.UserService
-	postService    service.PostService
-	commentService service.CommentService
+	userService     service.UserService
+	postService     service.PostService
+	commentService  service.CommentService
+	followerService service.FollowerService
 }
 
 func (c *Container) initServices(r repositories) services {
 	return services{
-		userService:    application.NewUserService(r.userRepository),
-		postService:    application.NewPostService(r.postRepository, r.commentRepository),
-		commentService: application.NewCommentService(r.commentRepository),
+		userService:     application.NewUserService(r.userRepository, c.logger),
+		postService:     application.NewPostService(r.postRepository, r.commentRepository, c.logger),
+		commentService:  application.NewCommentService(r.commentRepository, c.logger),
+		followerService: application.NewFollowerService(r.followerRepository, c.logger),
 	}
 }
