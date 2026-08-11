@@ -19,7 +19,10 @@ type postRepository struct {
 	logger *logger.Logger
 }
 
-func NewPostRepository(db *sql.DB, logger *logger.Logger) repository.PostRepository {
+func NewPostRepository(
+	db *sql.DB,
+	logger *logger.Logger,
+) repository.PostRepository {
 	return &postRepository{
 		db:     db,
 		logger: logger,
@@ -307,4 +310,96 @@ func (postRepo *postRepository) Update(
 	})
 
 	return &updatedPost, nil
+}
+
+func (postRepo *postRepository) GetFeed(
+	ctx context.Context,
+	query repository.FeedQuery,
+) ([]*entity.Post, error) {
+
+	order := "DESC"
+	if query.Sort == "asc" {
+		order = "ASC"
+	}
+
+	sqlQuery := `
+		SELECT p.id, p.user_id, p.title, p.content, p.created_at, p.version, p.tags, u.username, COUNT(c.id) AS comments_count
+		FROM posts p 
+		    LEFT JOIN comments c ON c.post_id = p.id 
+		    LEFT JOIN users u ON p.user_id = u.id
+		    JOIN followers f ON f.follower_id = p.user_id OR p.user_id = $1
+		WHERE ( 
+		    p.user_id = $1 OR EXISTS ( 
+		    	SELECT 1 FROM followers f WHERE f.user_id = $1 AND f.follower_id = p.user_id 
+			) 
+		) 
+		AND (
+			$4 = '' OR p.title ILIKE '%' || $4 || '%' OR p.content ILIKE '%' || $4 || '%' 
+		)
+		AND (
+			$5::text[] = '{}' OR p.tags @> $5
+		)
+		GROUP BY p.id, p.user_id, p.title, p.content, p.created_at, p.version, p.tags, u.username
+		ORDER BY p.created_at ` + order + ` LIMIT $2 OFFSET $3
+		`
+
+	ctx, cancel := context.WithTimeout(
+		ctx,
+		config.QueryTimeoutDuration,
+	)
+	defer cancel()
+
+	rows, err := postRepo.db.QueryContext(
+		ctx,
+		sqlQuery,
+		query.UserID,
+		query.Limit,
+		query.Offset,
+		query.Search,
+		pq.Array(query.Tags),
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	defer func(rows *sql.Rows) {
+		err := rows.Close()
+		if err != nil {
+			postRepo.logger.Error(
+				"failed to close posts rows",
+				"error", err,
+			)
+		}
+	}(rows)
+
+	posts := make([]*entity.Post, 0, query.Limit)
+
+	for rows.Next() {
+		var post entity.Post
+
+		err := rows.Scan(
+			&post.ID,
+			&post.UserId,
+			&post.Title,
+			&post.Content,
+			&post.CreatedAt,
+			&post.Version,
+			pq.Array(&post.Tags),
+			&post.User.Username,
+			&post.CommentsCount,
+		)
+
+		if err != nil {
+			return nil, err
+		}
+
+		posts = append(posts, &post)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return posts, nil
 }

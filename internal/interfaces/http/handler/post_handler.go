@@ -123,3 +123,39 @@ func (h *PostHandler) UpdatePostHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 }
+
+func (h *PostHandler) GetFeed(w http.ResponseWriter, r *http.Request) {
+	req := request.PaginatedFeedQuery{
+		Limit:  20,
+		Offset: 0,
+		Sort:   "desc",
+		Tags:   []string{},
+	}
+
+	if err := req.Parse(r); err != nil {
+		utils.BadRequestError(w, r, err)
+		return
+	}
+
+	//TODO: userID := getUserIDFromContext(r.Context())
+	userID := int64(1)
+
+	posts, err := h.postService.GetFeed(r.Context(), service.GetFeedInput{
+		UserID: userID,
+		Limit:  req.Limit,
+		Offset: req.Offset,
+		Sort:   req.Sort,
+		Search: req.Search,
+		Tags:   req.Tags,
+	})
+
+	if err != nil {
+		utils.InternalServerError(w, r, err)
+		return
+	}
+
+	if err := utils.ResponseJSON(w, http.StatusOK, posts); err != nil {
+		utils.InternalServerError(w, r, err)
+		return
+	}
+}

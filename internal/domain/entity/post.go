@@ -1,13 +1,18 @@
 package entity
 
+import "time"
+
 type Post struct {
-	ID        int64     `json:"id"`
-	Content   string    `json:"content"`
-	Title     string    `json:"title"`
-	UserId    int64     `json:"user_id"`
-	Tags      []string  `json:"tags"`
-	Comment   []Comment `json:"comments"`
-	Version   int       `json:"version"`
-	CreatedAt string    `json:"created_at"`
-	UpdatedAt string    `json:"updated_at"`
+	ID        int64
+	Content   string
+	Title     string
+	UserId    int64
+	Tags      []string
+	Comment   []Comment
+	User      User
+	Version   int
+	CreatedAt time.Time
+	UpdatedAt time.Time
+
+	CommentsCount int
 }

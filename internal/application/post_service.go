@@ -29,31 +29,31 @@ func NewPostService(
 	}
 }
 
-func (ps *postService) Create(ctx context.Context, req request.CreatePostRequest) (*response.PostResponse, error) {
-	post := &entity.Post{
-		Title:   req.Title,
-		Content: req.Content,
-		Tags:    req.Tags,
+func (ps *postService) Create(ctx context.Context, postRequest request.CreatePostRequest) (*response.PostResponse, error) {
+	req := &entity.Post{
+		Title:   postRequest.Title,
+		Content: postRequest.Content,
+		Tags:    postRequest.Tags,
 		UserId:  1, // TODO: get from auth context
 	}
 
-	value, err := ps.postRepository.Create(ctx, post)
+	post, err := ps.postRepository.Create(ctx, req)
 	if err != nil {
 		ps.logger.Error("failed to create post", "error", err)
 		return nil, err
 	}
 
-	ps.logger.Info("post created successfully", "postID", value.ID, "userID", value.UserId)
+	ps.logger.Info("post created successfully", "postID", post.ID, "userID", post.UserId)
 
 	return &response.PostResponse{
-		ID:        value.ID,
-		Content:   value.Content,
-		Title:     value.Title,
-		UserId:    value.UserId,
-		Tags:      value.Tags,
-		Version:   value.Version,
-		CreatedAt: value.CreatedAt,
-		UpdatedAt: value.UpdatedAt,
+		ID:        post.ID,
+		Content:   post.Content,
+		Title:     post.Title,
+		UserId:    post.UserId,
+		Tags:      post.Tags,
+		Version:   post.Version,
+		CreatedAt: post.CreatedAt.In(response.VietnamLocation).Format(response.VietNamTimeFormat),
+		UpdatedAt: post.UpdatedAt.In(response.VietnamLocation).Format(response.VietNamTimeFormat),
 	}, nil
 }
 
@@ -73,8 +73,8 @@ func (ps *postService) GetById(ctx context.Context, postID int64) (*response.Pos
 		UserId:    post.UserId,
 		Tags:      post.Tags,
 		Version:   post.Version,
-		CreatedAt: post.CreatedAt,
-		UpdatedAt: post.UpdatedAt,
+		CreatedAt: post.CreatedAt.In(response.VietnamLocation).Format(response.VietNamTimeFormat),
+		UpdatedAt: post.UpdatedAt.In(response.VietnamLocation).Format(response.VietNamTimeFormat),
 	}, nil
 }
 
@@ -118,8 +118,8 @@ func (ps *postService) GetByIdWithComments(ctx context.Context, postID int64) (*
 		UserId:          post.UserId,
 		Tags:            post.Tags,
 		Version:         post.Version,
-		CreatedAt:       post.CreatedAt,
-		UpdatedAt:       post.UpdatedAt,
+		CreatedAt:       post.CreatedAt.In(response.VietnamLocation).Format(response.VietNamTimeFormat),
+		UpdatedAt:       post.UpdatedAt.In(response.VietnamLocation).Format(response.VietNamTimeFormat),
 		CommentResponse: commentResponses,
 	}, nil
 }
@@ -168,7 +168,60 @@ func (ps *postService) Update(ctx context.Context, postID int64, req request.Upd
 		UserId:    updatedPost.UserId,
 		Tags:      updatedPost.Tags,
 		Version:   updatedPost.Version,
-		CreatedAt: updatedPost.CreatedAt,
-		UpdatedAt: updatedPost.UpdatedAt,
+		CreatedAt: updatedPost.CreatedAt.In(response.VietnamLocation).Format(response.VietNamTimeFormat),
+		UpdatedAt: updatedPost.UpdatedAt.In(response.VietnamLocation).Format(response.VietNamTimeFormat),
 	}, nil
+}
+
+func (ps *postService) GetFeed(ctx context.Context, input service.GetFeedInput) ([]*response.PostWithMetaData, error) {
+	if input.Limit <= 0 {
+		input.Limit = 20
+	}
+
+	if input.Limit > 20 {
+		input.Limit = 20
+	}
+
+	if input.Offset < 0 {
+		input.Offset = 0
+	}
+
+	if input.Sort != "asc" && input.Sort != "desc" {
+		input.Sort = "desc"
+	}
+
+	query := repository.FeedQuery{
+		UserID: input.UserID,
+		Limit:  input.Limit,
+		Offset: input.Offset,
+		Sort:   input.Sort,
+		Search: input.Search,
+		Tags:   input.Tags,
+	}
+
+	posts, err := ps.postRepository.GetFeed(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+
+	feed := make([]*response.PostWithMetaData, 0, len(posts))
+
+	for _, post := range posts {
+		items := &response.PostWithMetaData{
+			PostResponse: response.PostResponse{
+				ID:        post.ID,
+				Content:   post.Content,
+				Title:     post.Title,
+				UserId:    post.UserId,
+				Tags:      post.Tags,
+				Version:   post.Version,
+				CreatedAt: post.CreatedAt.In(response.VietnamLocation).Format(response.VietNamTimeFormat),
+				UpdatedAt: post.UpdatedAt.In(response.VietnamLocation).Format(response.VietNamTimeFormat),
+			},
+			CommentsCount: post.CommentsCount,
+		}
+		feed = append(feed, items)
+	}
+
+	return feed, nil
 }
