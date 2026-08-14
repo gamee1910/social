@@ -28,3 +28,6 @@ migrate-force:
 		exit 1; \
 	fi
 	migrate -path $(MIGRATIONS) -database "$(DB_URL)" force $(version)
+
+gen-docs:
+	swag init -g cmd/api/main.go -o docs --parseInternal

@@ -22,6 +22,18 @@ func NewUserHandler(userService service.UserService, logger *logger.Logger) *Use
 	}
 }
 
+// GetUserById
+//
+// @Summary Get user by ID
+// @Description Get user information by user ID
+// @Tags Users
+// @Produce json
+// @Param userID path int64 true "User ID"
+// @Success 200 {object} response.UserResponse
+// @Failure 400 {object} response.ErrorResponse
+// @Failure 404 {object} response.ErrorResponse
+// @Failure 500 {object} response.ErrorResponse
+// @Router /users/{userID} [get]
 func (handler *UserHandler) GetUserById(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 

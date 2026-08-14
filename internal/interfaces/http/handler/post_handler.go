@@ -16,7 +16,10 @@ type PostHandler struct {
 	logger      *logger.Logger
 }
 
-func NewPostHandler(postService service.PostService, logger *logger.Logger) *PostHandler {
+func NewPostHandler(
+	postService service.PostService,
+	logger *logger.Logger,
+) *PostHandler {
 	return &PostHandler{
 		postService: postService,
 		logger:      logger,
@@ -25,6 +28,18 @@ func NewPostHandler(postService service.PostService, logger *logger.Logger) *Pos
 
 const postIDKey string = "postID"
 
+// CreatePostHandler
+//
+// @Summary Create a post
+// @Description Create a new post
+// @Tags Posts
+// @Accept json
+// @Produce json
+// @Param request body request.CreatePostRequest true "Create post request"
+// @Success 201 {object} response.PostResponse
+// @Failure 400 {object} response.ErrorResponse
+// @Failure 401 {object} response.ErrorResponse
+// @Router /posts/ [post]
 func (h *PostHandler) CreatePostHandler(w http.ResponseWriter, r *http.Request) {
 	var req request.CreatePostRequest
 
@@ -49,6 +64,16 @@ func (h *PostHandler) CreatePostHandler(w http.ResponseWriter, r *http.Request) 
 	}
 }
 
+// GetPostHandler
+//
+// @Summary Get a post
+// @Description Get a post by ID
+// @Tags Posts
+// @Produce json
+// @Param postID path int64 true "Post ID"
+// @Success 200 {object} response.PostResponse
+// @Failure 404 {object} response.ErrorResponse
+// @Router /posts/{postID}/ [get]
 func (h *PostHandler) GetPostHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -70,6 +95,16 @@ func (h *PostHandler) GetPostHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// DeletePostHandler
+//
+// @Summary Delete a post
+// @Description Delete a post by ID
+// @Tags Posts
+// @Param postID path int64 true "Post ID"
+// @Success 204
+// @Failure 404 {object} response.ErrorResponse
+// @Failure 401 {object} response.ErrorResponse
+// @Router /posts/{postID}/ [delete]
 func (h *PostHandler) DeletePostHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -87,6 +122,20 @@ func (h *PostHandler) DeletePostHandler(w http.ResponseWriter, r *http.Request) 
 	w.WriteHeader(http.StatusNoContent)
 }
 
+// UpdatePostHandler
+//
+// @Summary Update a post
+// @Description Update a post by ID
+// @Tags Posts
+// @Accept json
+// @Produce json
+// @Param postID path int64 true "Post ID"
+// @Param request body request.UpdatePostRequest true "Update post request"
+// @Success 200 {object} response.PostResponse
+// @Failure 400 {object} response.ErrorResponse
+// @Failure 404 {object} response.ErrorResponse
+// @Failure 401 {object} response.ErrorResponse
+// @Router /posts/{postID}/ [patch]
 func (h *PostHandler) UpdatePostHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -124,6 +173,21 @@ func (h *PostHandler) UpdatePostHandler(w http.ResponseWriter, r *http.Request) 
 	}
 }
 
+// GetFeed
+//
+// @Summary Get feed
+// @Description Get paginated posts for the current user
+// @Tags Posts
+// @Produce json
+// @Param limit query int false "Number of posts to return"
+// @Param offset query int false "Number of posts to skip"
+// @Param sort query string false "Sort order" Enums(asc,desc)
+// @Param search query string false "Search keyword"
+// @Param tags query []string false "Filter by tags"
+// @Success 200 {array} response.PostResponse
+// @Failure 400 {object} response.ErrorResponse
+// @Failure 500 {object} response.ErrorResponse
+// @Router /posts/feed [get]
 func (h *PostHandler) GetFeed(w http.ResponseWriter, r *http.Request) {
 	req := request.PaginatedFeedQuery{
 		Limit:  20,

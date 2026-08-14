@@ -14,8 +14,15 @@ import (
 	"github.com/gamee1910/social/internal/infrastructure/di"
 	"github.com/gamee1910/social/internal/interfaces/http/routes"
 	"github.com/gamee1910/social/pkg/logger"
+
+	_ "github.com/gamee1910/social/docs"
 )
 
+// @title Social API
+// @version 1.0
+// @description Social network REST API
+// @host localhost:8080
+// @BasePath /api/v1
 func main() {
 	cfg := config.Load()
 	log := logger.NewLogger(cfg.Application.Env)

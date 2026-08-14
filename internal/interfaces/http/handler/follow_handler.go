@@ -11,9 +11,26 @@ type FollowerHandler struct {
 	followerService service.FollowerService
 }
 
-func NewFollowerHandler(followerService service.FollowerService) *FollowerHandler {
-	return &FollowerHandler{followerService: followerService}
+func NewFollowerHandler(
+	followerService service.FollowerService,
+) *FollowerHandler {
+	return &FollowerHandler{
+		followerService: followerService,
+	}
 }
+
+// FollowUser
+//
+// @Summary Follow a user
+// @Description Follow another user by user ID
+// @Tags Followers
+// @Produce json
+// @Param userID path int64 true "User ID to follow"
+// @Success 204 "Successfully followed user"
+// @Failure 400 {object} response.ErrorResponse
+// @Failure 401 {object} response.ErrorResponse
+// @Failure 404 {object} response.ErrorResponse
+// @Router /users/{userID}/follow [post]
 func (h *FollowerHandler) FollowUser(
 	w http.ResponseWriter,
 	r *http.Request,
@@ -42,6 +59,18 @@ func (h *FollowerHandler) FollowUser(
 	w.WriteHeader(http.StatusNoContent)
 }
 
+// UnfollowUser
+//
+// @Summary Unfollow a user
+// @Description Stop following another user by user ID
+// @Tags Followers
+// @Produce json
+// @Param userID path int64 true "User ID to unfollow"
+// @Success 204 "Successfully unfollowed user"
+// @Failure 400 {object} response.ErrorResponse
+// @Failure 404 {object} response.ErrorResponse
+// @Failure 500 {object} response.ErrorResponse
+// @Router /users/{userID}/follow [delete]
 func (h *FollowerHandler) UnfollowUser(
 	w http.ResponseWriter,
 	r *http.Request,
