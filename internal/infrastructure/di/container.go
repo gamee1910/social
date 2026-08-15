@@ -65,7 +65,7 @@ type repositories struct {
 	userRepository     repository.UserRepository
 	postRepository     repository.PostRepository
 	commentRepository  repository.CommentRepository
-	followerRepository repository.FollowerRepository
+	followerRepository repository.FollowRepository
 }
 
 func (c *Container) initRepositories() repositories {
@@ -73,7 +73,7 @@ func (c *Container) initRepositories() repositories {
 		userRepository:     postgres.NewUserRepository(c.db, c.logger),
 		postRepository:     postgres.NewPostRepository(c.db, c.logger),
 		commentRepository:  postgres.NewCommentRepository(c.db, c.logger),
-		followerRepository: postgres.NewFollowerRepository(c.db, c.logger),
+		followerRepository: postgres.NewFollowRepository(c.db, c.logger),
 	}
 }
 
@@ -81,7 +81,7 @@ type services struct {
 	userService     service.UserService
 	postService     service.PostService
 	commentService  service.CommentService
-	followerService service.FollowerService
+	followerService service.FollowService
 }
 
 func (c *Container) initServices(r repositories) services {

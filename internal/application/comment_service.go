@@ -24,10 +24,11 @@ func NewCommentService(
 	}
 }
 
-func (cs *commentService) GetByPostId(ctx context.Context, postID int64) ([]response.CommentResponse, error) {
-	entities, err := cs.commentRepository.GetByPostId(ctx, postID)
+func (commentService *commentService) GetByPostId(ctx context.Context, postID int64) ([]response.CommentResponse, error) {
+	entities, err := commentService.commentRepository.GetByPostId(ctx, postID)
+
 	if err != nil {
-		cs.logger.Error("failed to get comments by post id", "postID", postID, "error", err)
+		commentService.logger.Error("failed to get comments by post id", "postID", postID, "error", err)
 		return nil, err
 	}
 
@@ -43,11 +44,11 @@ func (cs *commentService) GetByPostId(ctx context.Context, postID int64) ([]resp
 				ID:       cmt.User.ID,
 				Username: cmt.User.Username,
 			},
-			CreatedAt: cmt.CreatedAt,
+			CreatedAt: cmt.CreatedAt.In(response.VietnamLocation).Format(response.VietNamTimeFormat),
 		})
 	}
 
-	cs.logger.Info("comments retrieved successfully", "postID", postID, "count", len(responses))
+	commentService.logger.Info("comments retrieved successfully", "postID", postID, "count", len(responses))
 
 	return responses, nil
 }

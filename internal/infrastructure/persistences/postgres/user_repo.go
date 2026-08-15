@@ -18,14 +18,17 @@ type userRepository struct {
 	logger *logger.Logger
 }
 
-func NewUserRepository(db *sql.DB, logger *logger.Logger) repository.UserRepository {
+func NewUserRepository(
+	db *sql.DB,
+	logger *logger.Logger,
+) repository.UserRepository {
 	return &userRepository{
 		db:     db,
 		logger: logger,
 	}
 }
 
-func (userRepo *userRepository) Create(
+func (repository *userRepository) Create(
 	ctx context.Context,
 	user *entity.User,
 ) (*entity.User, error) {
@@ -33,7 +36,7 @@ func (userRepo *userRepository) Create(
 	ctx, cancel := context.WithTimeout(ctx, config.QueryTimeoutDuration)
 	defer cancel()
 
-	userRepo.logger.Info(
+	repository.logger.Info(
 		"Creating user",
 		"username", user.Username,
 		"email", user.Email,
@@ -47,7 +50,7 @@ func (userRepo *userRepository) Create(
 
 	var result entity.User
 
-	err := userRepo.db.QueryRowContext(
+	err := repository.db.QueryRowContext(
 		ctx,
 		query,
 		user.Username,
@@ -61,7 +64,7 @@ func (userRepo *userRepository) Create(
 	)
 
 	if err != nil {
-		userRepo.logger.Error(
+		repository.logger.Error(
 			"Failed to create user",
 			"username", user.Username,
 			"email", user.Email,
@@ -71,7 +74,7 @@ func (userRepo *userRepository) Create(
 		return nil, err
 	}
 
-	userRepo.logger.Info(
+	repository.logger.Info(
 		"Successfully created user",
 		"userID", result.ID,
 		"username", result.Username,
@@ -81,7 +84,7 @@ func (userRepo *userRepository) Create(
 	return &result, nil
 }
 
-func (userRepo *userRepository) GetById(
+func (repository *userRepository) GetById(
 	ctx context.Context,
 	userID int64,
 ) (*entity.User, error) {
@@ -89,7 +92,7 @@ func (userRepo *userRepository) GetById(
 	ctx, cancel := context.WithTimeout(ctx, config.QueryTimeoutDuration)
 	defer cancel()
 
-	userRepo.logger.Info(
+	repository.logger.Info(
 		"Getting user by ID",
 		"userID", userID,
 	)
@@ -98,7 +101,7 @@ func (userRepo *userRepository) GetById(
 
 	var user entity.User
 
-	err := userRepo.db.QueryRowContext(
+	err := repository.db.QueryRowContext(
 		ctx,
 		query,
 		userID,
@@ -110,7 +113,7 @@ func (userRepo *userRepository) GetById(
 
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			userRepo.logger.Warn(
+			repository.logger.Warn(
 				"User not found",
 				"userID", userID,
 			)
@@ -118,7 +121,7 @@ func (userRepo *userRepository) GetById(
 			return nil, domain.ErrNotFound
 		}
 
-		userRepo.logger.Error(
+		repository.logger.Error(
 			"Failed to get user by ID",
 			"userID", userID,
 			"error", err,
@@ -130,7 +133,7 @@ func (userRepo *userRepository) GetById(
 		)
 	}
 
-	userRepo.logger.Info(
+	repository.logger.Info(
 		"Successfully retrieved user",
 		"userID", user.ID,
 		"username", user.Username,

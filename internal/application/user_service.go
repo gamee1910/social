@@ -24,17 +24,17 @@ func NewUserService(
 	}
 }
 
-func (us *userService) GetById(ctx context.Context, userID int64) (*response.UserResponse, error) {
-	user, err := us.userRepository.GetById(ctx, userID)
+func (userService *userService) GetById(ctx context.Context, userID int64) (*response.UserResponse, error) {
+	user, err := userService.userRepository.GetById(ctx, userID)
 	if err != nil {
-		us.logger.Error("failed to get user by id", "userID", userID, "error", err)
+		userService.logger.Error("failed to get user by id", "userID", userID, "error", err)
 		return nil, err
 	}
-	us.logger.Info("user retrieved successfully", "userID", user.ID)
+	userService.logger.Info("user retrieved successfully", "userID", user.ID)
 	return &response.UserResponse{
 		ID:        user.ID,
 		Username:  user.Username,
 		Email:     user.Email,
-		CreatedAt: user.CreatedAt,
+		CreatedAt: user.CreatedAt.In(response.VietnamLocation).Format(response.VietNamTimeFormat),
 	}, nil
 }

@@ -15,21 +15,24 @@ type commentRepository struct {
 	logger *logger.Logger
 }
 
-func NewCommentRepository(db *sql.DB, logger *logger.Logger) repository.CommentRepository {
+func NewCommentRepository(
+	db *sql.DB,
+	logger *logger.Logger,
+) repository.CommentRepository {
 	return &commentRepository{
 		db:     db,
 		logger: logger,
 	}
 }
 
-func (commentRepo *commentRepository) GetByPostId(
+func (repository *commentRepository) GetByPostId(
 	ctx context.Context,
 	postId int64,
 ) ([]entity.Comment, error) {
 	ctx, cancel := context.WithTimeout(ctx, config.QueryTimeoutDuration)
 	defer cancel()
 
-	commentRepo.logger.Info(
+	repository.logger.Info(
 		"Getting comments by post ID",
 		"postID", postId,
 	)
@@ -41,9 +44,9 @@ func (commentRepo *commentRepository) GetByPostId(
 		ORDER BY c.created_at DESC
 	`
 
-	rows, err := commentRepo.db.QueryContext(ctx, query, postId)
+	rows, err := repository.db.QueryContext(ctx, query, postId)
 	if err != nil {
-		commentRepo.logger.Error(
+		repository.logger.Error(
 			"Failed to get comments by post ID",
 			"postID", postId,
 			"error", err,
@@ -53,7 +56,7 @@ func (commentRepo *commentRepository) GetByPostId(
 
 	defer func() {
 		if err := rows.Close(); err != nil {
-			commentRepo.logger.Error(
+			repository.logger.Error(
 				"Failed to close comment rows",
 				"postID", postId,
 				"error", err,
@@ -78,7 +81,7 @@ func (commentRepo *commentRepository) GetByPostId(
 		)
 
 		if err != nil {
-			commentRepo.logger.Error(
+			repository.logger.Error(
 				"Failed to scan comment",
 				"postID", postId,
 				"error", err,
@@ -90,7 +93,7 @@ func (commentRepo *commentRepository) GetByPostId(
 	}
 
 	if err := rows.Err(); err != nil {
-		commentRepo.logger.Error(
+		repository.logger.Error(
 			"Error while iterating comments",
 			"postID", postId,
 			"error", err,
@@ -98,7 +101,7 @@ func (commentRepo *commentRepository) GetByPostId(
 		return nil, err
 	}
 
-	commentRepo.logger.Info(
+	repository.logger.Info(
 		"Successfully retrieved comments",
 		"postID", postId,
 		"count", len(comments),

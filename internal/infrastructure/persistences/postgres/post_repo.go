@@ -29,14 +29,14 @@ func NewPostRepository(
 	}
 }
 
-func (postRepo *postRepository) Create(
+func (repository *postRepository) Create(
 	ctx context.Context,
 	post *entity.Post,
 ) (*entity.Post, error) {
 	ctx, cancel := context.WithTimeout(ctx, config.QueryTimeoutDuration)
 	defer cancel()
 
-	postRepo.logger.Info("Creating post", map[string]any{
+	repository.logger.Info("Creating post", map[string]any{
 		"user_id": post.UserId,
 		"title":   post.Title,
 	})
@@ -49,7 +49,7 @@ func (postRepo *postRepository) Create(
 
 	var result entity.Post
 
-	err := postRepo.db.QueryRowContext(
+	err := repository.db.QueryRowContext(
 		ctx,
 		query,
 		post.Content,
@@ -68,7 +68,7 @@ func (postRepo *postRepository) Create(
 	)
 
 	if err != nil {
-		postRepo.logger.Error("Failed to create post", map[string]any{
+		repository.logger.Error("Failed to create post", map[string]any{
 			"user_id": post.UserId,
 			"error":   err,
 		})
@@ -76,7 +76,7 @@ func (postRepo *postRepository) Create(
 		return nil, fmt.Errorf("create post error: %w", err)
 	}
 
-	postRepo.logger.Info("Post created successfully", map[string]any{
+	repository.logger.Info("Post created successfully", map[string]any{
 		"post_id": result.ID,
 		"user_id": result.UserId,
 	})
@@ -84,14 +84,14 @@ func (postRepo *postRepository) Create(
 	return &result, nil
 }
 
-func (postRepo *postRepository) GetById(
+func (repository *postRepository) GetById(
 	ctx context.Context,
 	postId int64,
 ) (*entity.Post, error) {
 	ctx, cancel := context.WithTimeout(ctx, config.QueryTimeoutDuration)
 	defer cancel()
 
-	postRepo.logger.Info("Getting post by ID", map[string]any{
+	repository.logger.Info("Getting post by ID", map[string]any{
 		"post_id": postId,
 	})
 
@@ -103,7 +103,7 @@ func (postRepo *postRepository) GetById(
 
 	var post entity.Post
 
-	err := postRepo.db.QueryRowContext(ctx, query, postId).
+	err := repository.db.QueryRowContext(ctx, query, postId).
 		Scan(
 			&post.ID,
 			&post.UserId,
@@ -117,14 +117,14 @@ func (postRepo *postRepository) GetById(
 
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			postRepo.logger.Warn("Post not found", map[string]any{
+			repository.logger.Warn("Post not found", map[string]any{
 				"post_id": postId,
 			})
 
 			return nil, domain.ErrNotFound
 		}
 
-		postRepo.logger.Error("Failed to get post", map[string]any{
+		repository.logger.Error("Failed to get post", map[string]any{
 			"post_id": postId,
 			"error":   err,
 		})
@@ -132,7 +132,7 @@ func (postRepo *postRepository) GetById(
 		return nil, fmt.Errorf("get post: %w", err)
 	}
 
-	postRepo.logger.Info("Post retrieved successfully", map[string]any{
+	repository.logger.Info("Post retrieved successfully", map[string]any{
 		"post_id": post.ID,
 		"user_id": post.UserId,
 	})
@@ -140,24 +140,24 @@ func (postRepo *postRepository) GetById(
 	return &post, nil
 }
 
-func (postRepo *postRepository) Delete(
+func (repository *postRepository) Delete(
 	ctx context.Context,
 	postID int64,
 ) error {
 	ctx, cancel := context.WithTimeout(ctx, config.QueryTimeoutDuration)
 	defer cancel()
 
-	postRepo.logger.Info("Deleting post", map[string]any{
+	repository.logger.Info("Deleting post", map[string]any{
 		"post_id": postID,
 	})
 
-	res, err := postRepo.db.ExecContext(
+	res, err := repository.db.ExecContext(
 		ctx,
 		`DELETE FROM posts WHERE id = $1`,
 		postID,
 	)
 	if err != nil {
-		postRepo.logger.Error("Failed to delete post", map[string]any{
+		repository.logger.Error("Failed to delete post", map[string]any{
 			"post_id": postID,
 			"error":   err,
 		})
@@ -167,7 +167,7 @@ func (postRepo *postRepository) Delete(
 
 	rowsAffected, err := res.RowsAffected()
 	if err != nil {
-		postRepo.logger.Error("Failed to get affected rows", map[string]any{
+		repository.logger.Error("Failed to get affected rows", map[string]any{
 			"post_id": postID,
 			"error":   err,
 		})
@@ -176,21 +176,21 @@ func (postRepo *postRepository) Delete(
 	}
 
 	if rowsAffected == 0 {
-		postRepo.logger.Warn("Post not found for deletion", map[string]any{
+		repository.logger.Warn("Post not found for deletion", map[string]any{
 			"post_id": postID,
 		})
 
 		return domain.ErrNotFound
 	}
 
-	postRepo.logger.Info("Post deleted successfully", map[string]any{
+	repository.logger.Info("Post deleted successfully", map[string]any{
 		"post_id": postID,
 	})
 
 	return nil
 }
 
-func (postRepo *postRepository) Update(
+func (repository *postRepository) Update(
 	ctx context.Context,
 	postId int64,
 	post *entity.Post,
@@ -198,15 +198,15 @@ func (postRepo *postRepository) Update(
 	ctx, cancel := context.WithTimeout(ctx, config.QueryTimeoutDuration)
 	defer cancel()
 
-	postRepo.logger.Info("Updating post", map[string]any{
+	repository.logger.Info("Updating post", map[string]any{
 		"post_id": postId,
 		"version": post.Version,
 		"title":   post.Title,
 	})
 
-	tx, err := postRepo.db.BeginTx(ctx, nil)
+	tx, err := repository.db.BeginTx(ctx, nil)
 	if err != nil {
-		postRepo.logger.Error("Failed to begin update transaction", map[string]any{
+		repository.logger.Error("Failed to begin update transaction", map[string]any{
 			"post_id": postId,
 			"error":   err,
 		})
@@ -216,7 +216,7 @@ func (postRepo *postRepository) Update(
 
 	defer func() {
 		if err := tx.Rollback(); err != nil && !errors.Is(err, sql.ErrTxDone) {
-			postRepo.logger.Error("Failed to rollback transaction", map[string]any{
+			repository.logger.Error("Failed to rollback transaction", map[string]any{
 				"post_id": postId,
 				"error":   err,
 			})
@@ -261,7 +261,7 @@ func (postRepo *postRepository) Update(
 			).Scan(&exists)
 
 			if err != nil {
-				postRepo.logger.Error("Failed to check post existence", map[string]any{
+				repository.logger.Error("Failed to check post existence", map[string]any{
 					"post_id": postId,
 					"error":   err,
 				})
@@ -270,14 +270,14 @@ func (postRepo *postRepository) Update(
 			}
 
 			if !exists {
-				postRepo.logger.Warn("Post not found for update", map[string]any{
+				repository.logger.Warn("Post not found for update", map[string]any{
 					"post_id": postId,
 				})
 
 				return nil, domain.ErrNotFound
 			}
 
-			postRepo.logger.Warn("Post version conflict", map[string]any{
+			repository.logger.Warn("Post version conflict", map[string]any{
 				"post_id":       postId,
 				"requested_ver": post.Version,
 			})
@@ -285,7 +285,7 @@ func (postRepo *postRepository) Update(
 			return nil, domain.ErrVersionConflict
 		}
 
-		postRepo.logger.Error("Failed to update post", map[string]any{
+		repository.logger.Error("Failed to update post", map[string]any{
 			"post_id": postId,
 			"error":   err,
 		})
@@ -294,7 +294,7 @@ func (postRepo *postRepository) Update(
 	}
 
 	if err := tx.Commit(); err != nil {
-		postRepo.logger.Error("Failed to commit post update", map[string]any{
+		repository.logger.Error("Failed to commit post update", map[string]any{
 			"post_id": postId,
 			"error":   err,
 		})
@@ -302,7 +302,7 @@ func (postRepo *postRepository) Update(
 		return nil, fmt.Errorf("commit transaction: %w", err)
 	}
 
-	postRepo.logger.Info("Post updated successfully", map[string]any{
+	repository.logger.Info("Post updated successfully", map[string]any{
 		"post_id":     updatedPost.ID,
 		"user_id":     updatedPost.UserId,
 		"old_version": post.Version,
@@ -312,7 +312,7 @@ func (postRepo *postRepository) Update(
 	return &updatedPost, nil
 }
 
-func (postRepo *postRepository) GetFeed(
+func (repository *postRepository) GetFeed(
 	ctx context.Context,
 	query repository.FeedQuery,
 ) ([]*entity.Post, error) {
@@ -349,7 +349,7 @@ func (postRepo *postRepository) GetFeed(
 	)
 	defer cancel()
 
-	rows, err := postRepo.db.QueryContext(
+	rows, err := repository.db.QueryContext(
 		ctx,
 		sqlQuery,
 		query.UserID,
@@ -366,7 +366,7 @@ func (postRepo *postRepository) GetFeed(
 	defer func(rows *sql.Rows) {
 		err := rows.Close()
 		if err != nil {
-			postRepo.logger.Error(
+			repository.logger.Error(
 				"failed to close posts rows",
 				"error", err,
 			)

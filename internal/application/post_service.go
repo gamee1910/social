@@ -29,7 +29,7 @@ func NewPostService(
 	}
 }
 
-func (ps *postService) Create(ctx context.Context, postRequest request.CreatePostRequest) (*response.PostResponse, error) {
+func (postService *postService) Create(ctx context.Context, postRequest request.CreatePostRequest) (*response.PostResponse, error) {
 	req := &entity.Post{
 		Title:   postRequest.Title,
 		Content: postRequest.Content,
@@ -37,13 +37,13 @@ func (ps *postService) Create(ctx context.Context, postRequest request.CreatePos
 		UserId:  1, // TODO: get from auth context
 	}
 
-	post, err := ps.postRepository.Create(ctx, req)
+	post, err := postService.postRepository.Create(ctx, req)
 	if err != nil {
-		ps.logger.Error("failed to create post", "error", err)
+		postService.logger.Error("failed to create post", "error", err)
 		return nil, err
 	}
 
-	ps.logger.Info("post created successfully", "postID", post.ID, "userID", post.UserId)
+	postService.logger.Info("post created successfully", "postID", post.ID, "userID", post.UserId)
 
 	return &response.PostResponse{
 		ID:        post.ID,
@@ -57,14 +57,14 @@ func (ps *postService) Create(ctx context.Context, postRequest request.CreatePos
 	}, nil
 }
 
-func (ps *postService) GetById(ctx context.Context, postID int64) (*response.PostResponse, error) {
-	post, err := ps.postRepository.GetById(ctx, postID)
+func (postService *postService) GetById(ctx context.Context, postID int64) (*response.PostResponse, error) {
+	post, err := postService.postRepository.GetById(ctx, postID)
 	if err != nil {
-		ps.logger.Error("failed to get post by id", "postID", postID, "error", err)
+		postService.logger.Error("failed to get post by id", "postID", postID, "error", err)
 		return nil, err
 	}
 
-	ps.logger.Info("post retrieved successfully", "postID", post.ID)
+	postService.logger.Info("post retrieved successfully", "postID", post.ID)
 
 	return &response.PostResponse{
 		ID:        post.ID,
@@ -78,16 +78,16 @@ func (ps *postService) GetById(ctx context.Context, postID int64) (*response.Pos
 	}, nil
 }
 
-func (ps *postService) GetByIdWithComments(ctx context.Context, postID int64) (*response.PostResponse, error) {
-	post, err := ps.postRepository.GetById(ctx, postID)
+func (postService *postService) GetByIdWithComments(ctx context.Context, postID int64) (*response.PostResponse, error) {
+	post, err := postService.postRepository.GetById(ctx, postID)
 	if err != nil {
-		ps.logger.Error("failed to get post by id", "postID", postID, "error", err)
+		postService.logger.Error("failed to get post by id", "postID", postID, "error", err)
 		return nil, err
 	}
 
-	comments, err := ps.commentRepository.GetByPostId(ctx, post.ID)
+	comments, err := postService.commentRepository.GetByPostId(ctx, post.ID)
 	if err != nil {
-		ps.logger.Error("failed to get comments by post id", "postID", post.ID, "error", err)
+		postService.logger.Error("failed to get comments by post id", "postID", post.ID, "error", err)
 		return nil, err
 	}
 
@@ -105,11 +105,11 @@ func (ps *postService) GetByIdWithComments(ctx context.Context, postID int64) (*
 				ID:       cmt.User.ID,
 				Username: cmt.User.Username,
 			},
-			CreatedAt: cmt.CreatedAt,
+			CreatedAt: cmt.CreatedAt.In(response.VietnamLocation).Format(response.VietNamTimeFormat),
 		})
 	}
 
-	ps.logger.Info("post with comments retrieved successfully", "postID", post.ID, "commentCount", len(comments))
+	postService.logger.Info("post with comments retrieved successfully", "postID", post.ID, "commentCount", len(comments))
 
 	return &response.PostResponse{
 		ID:              post.ID,
@@ -124,20 +124,20 @@ func (ps *postService) GetByIdWithComments(ctx context.Context, postID int64) (*
 	}, nil
 }
 
-func (ps *postService) Delete(ctx context.Context, postID int64) error {
-	if err := ps.postRepository.Delete(ctx, postID); err != nil {
-		ps.logger.Error("failed to delete post", "postID", postID, "error", err)
+func (postService *postService) Delete(ctx context.Context, postID int64) error {
+	if err := postService.postRepository.Delete(ctx, postID); err != nil {
+		postService.logger.Error("failed to delete post", "postID", postID, "error", err)
 		return err
 	}
 
-	ps.logger.Info("post deleted successfully", "postID", postID)
+	postService.logger.Info("post deleted successfully", "postID", postID)
 	return nil
 }
 
-func (ps *postService) Update(ctx context.Context, postID int64, req request.UpdatePostRequest) (*response.PostResponse, error) {
-	post, err := ps.postRepository.GetById(ctx, postID)
+func (postService *postService) Update(ctx context.Context, postID int64, req request.UpdatePostRequest) (*response.PostResponse, error) {
+	post, err := postService.postRepository.GetById(ctx, postID)
 	if err != nil {
-		ps.logger.Error("failed to get post for update", "postID", postID, "error", err)
+		postService.logger.Error("failed to get post for update", "postID", postID, "error", err)
 		return nil, err
 	}
 
@@ -153,13 +153,13 @@ func (ps *postService) Update(ctx context.Context, postID int64, req request.Upd
 		post.Tags = req.Tags
 	}
 
-	updatedPost, err := ps.postRepository.Update(ctx, postID, post)
+	updatedPost, err := postService.postRepository.Update(ctx, postID, post)
 	if err != nil {
-		ps.logger.Error("failed to update post", "postID", postID, "error", err)
+		postService.logger.Error("failed to update post", "postID", postID, "error", err)
 		return nil, err
 	}
 
-	ps.logger.Info("post updated successfully", "postID", updatedPost.ID)
+	postService.logger.Info("post updated successfully", "postID", updatedPost.ID)
 
 	return &response.PostResponse{
 		ID:        updatedPost.ID,
@@ -173,7 +173,7 @@ func (ps *postService) Update(ctx context.Context, postID int64, req request.Upd
 	}, nil
 }
 
-func (ps *postService) GetFeed(ctx context.Context, input service.GetFeedInput) ([]*response.PostWithMetaData, error) {
+func (postService *postService) GetFeed(ctx context.Context, input service.GetFeedInput) ([]*response.PostWithMetaData, error) {
 	if input.Limit <= 0 {
 		input.Limit = 20
 	}
@@ -199,7 +199,7 @@ func (ps *postService) GetFeed(ctx context.Context, input service.GetFeedInput) 
 		Tags:   input.Tags,
 	}
 
-	posts, err := ps.postRepository.GetFeed(ctx, query)
+	posts, err := postService.postRepository.GetFeed(ctx, query)
 	if err != nil {
 		return nil, err
 	}

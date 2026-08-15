@@ -10,16 +10,16 @@ import (
 	"github.com/gamee1910/social/pkg/logger"
 )
 
-type followerRepository struct {
+type followRepository struct {
 	db     *sql.DB
 	logger *logger.Logger
 }
 
-func NewFollowerRepository(db *sql.DB, logger *logger.Logger) repository.FollowerRepository {
-	return &followerRepository{db: db, logger: logger}
+func NewFollowRepository(db *sql.DB, logger *logger.Logger) repository.FollowRepository {
+	return &followRepository{db: db, logger: logger}
 }
 
-func (f *followerRepository) FollowUser(
+func (repository *followRepository) FollowUser(
 	ctx context.Context,
 	userID, followerID int64,
 ) error {
@@ -35,7 +35,7 @@ func (f *followerRepository) FollowUser(
         ON CONFLICT (user_id, follower_id) DO NOTHING
     `
 
-	_, err := f.db.ExecContext(
+	_, err := repository.db.ExecContext(
 		ctx,
 		query,
 		userID,
@@ -43,7 +43,7 @@ func (f *followerRepository) FollowUser(
 	)
 
 	if err != nil {
-		f.logger.Error(
+		repository.logger.Error(
 			"follow user failed",
 			"userID", userID,
 			"followerID", followerID,
@@ -55,7 +55,7 @@ func (f *followerRepository) FollowUser(
 	return nil
 }
 
-func (f *followerRepository) UnfollowUser(
+func (repository *followRepository) UnfollowUser(
 	ctx context.Context,
 	userID, followerID int64,
 ) error {
@@ -71,14 +71,14 @@ func (f *followerRepository) UnfollowUser(
           AND follower_id = $2
     `
 
-	result, err := f.db.ExecContext(
+	result, err := repository.db.ExecContext(
 		ctx,
 		query,
 		userID,
 		followerID,
 	)
 	if err != nil {
-		f.logger.Error(
+		repository.logger.Error(
 			"unfollow user failed",
 			"userID", userID,
 			"followerID", followerID,
