@@ -7,6 +7,8 @@ import (
 	"github.com/gamee1910/social/internal/utils"
 )
 
+const followerIDKey string = "followerID"
+
 type FollowerHandler struct {
 	followerService service.FollowService
 }
@@ -30,14 +32,14 @@ func NewFollowerHandler(
 // @Failure 400 {object} response.ErrorResponse
 // @Failure 401 {object} response.ErrorResponse
 // @Failure 404 {object} response.ErrorResponse
-// @Router /follow/{followerID}/follow [post]
+// @Router /follow/{followerID}/follow [put]
 func (h *FollowerHandler) FollowUser(
 	w http.ResponseWriter,
 	r *http.Request,
 ) {
 	ctx := r.Context()
 
-	followingID, err := utils.GetIDFromParameter(userIDKey, r)
+	followingID, err := utils.GetIDFromParameter(followerIDKey, r)
 	if err != nil {
 		utils.BadRequestError(w, r, err)
 		return
@@ -77,7 +79,7 @@ func (h *FollowerHandler) UnfollowUser(
 ) {
 	ctx := r.Context()
 
-	followingID, err := utils.GetIDFromParameter(userIDKey, r)
+	followingID, err := utils.GetIDFromParameter(followerIDKey, r)
 	if err != nil {
 		utils.BadRequestError(w, r, err)
 		return

@@ -97,6 +97,65 @@ info:
   title: Social API
   version: "1.0"
 paths:
+  /follow/{followerID}/follow:
+    delete:
+      description: Stop following another user by user ID
+      parameters:
+      - description: User ID to unfollow
+        format: int64
+        in: path
+        name: followerID
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: Successfully unfollowed user
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      summary: Unfollow a user
+      tags:
+      - Followers
+    put:
+      description: Follow another user by user ID
+      parameters:
+      - description: User ID to follow
+        format: int64
+        in: path
+        name: followerID
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: Successfully followed user
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      summary: Follow a user
+      tags:
+      - Followers
   /posts/:
     post:
       consumes:
@@ -295,63 +354,4 @@ paths:
       summary: Get user by ID
       tags:
       - Users
-  /users/{userID}/follow:
-    delete:
-      description: Stop following another user by user ID
-      parameters:
-      - description: User ID to unfollow
-        format: int64
-        in: path
-        name: userID
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "204":
-          description: Successfully unfollowed user
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/response.ErrorResponse'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/response.ErrorResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/response.ErrorResponse'
-      summary: Unfollow a user
-      tags:
-      - Followers
-    post:
-      description: Follow another user by user ID
-      parameters:
-      - description: User ID to follow
-        format: int64
-        in: path
-        name: userID
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "204":
-          description: Successfully followed user
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/response.ErrorResponse'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/response.ErrorResponse'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/response.ErrorResponse'
-      summary: Follow a user
-      tags:
-      - Followers
 swagger: "2.0"
