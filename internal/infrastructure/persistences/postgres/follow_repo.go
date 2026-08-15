@@ -43,12 +43,7 @@ func (repository *followRepository) FollowUser(
 	)
 
 	if err != nil {
-		repository.logger.Error(
-			"follow user failed",
-			"userID", userID,
-			"followerID", followerID,
-			"error", err,
-		)
+		repository.logger.Error("follow user failed", "userID", userID, "followerID", followerID, "error", err)
 		return fmt.Errorf("follow user: %w", err)
 	}
 
@@ -78,12 +73,7 @@ func (repository *followRepository) UnfollowUser(
 		followerID,
 	)
 	if err != nil {
-		repository.logger.Error(
-			"unfollow user failed",
-			"userID", userID,
-			"followerID", followerID,
-			"error", err,
-		)
+		repository.logger.Error("unfollow user failed", "userID", userID, "followerID", followerID, "error", err)
 
 		return fmt.Errorf("unfollow user: %w", err)
 	}

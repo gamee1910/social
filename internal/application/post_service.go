@@ -18,9 +18,7 @@ type postService struct {
 }
 
 func NewPostService(
-	postRepo repository.PostRepository,
-	commentRepo repository.CommentRepository,
-	logger *logger.Logger,
+	postRepo repository.PostRepository, commentRepo repository.CommentRepository, logger *logger.Logger,
 ) service.PostService {
 	return &postService{
 		postRepository:    postRepo,

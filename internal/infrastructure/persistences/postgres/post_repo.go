@@ -36,14 +36,8 @@ func (repository *postRepository) Create(
 	ctx, cancel := context.WithTimeout(ctx, config.QueryTimeoutDuration)
 	defer cancel()
 
-	repository.logger.Info("Creating post", map[string]any{
-		"user_id": post.UserId,
-		"title":   post.Title,
-	})
-
 	query := `
-	INSERT INTO posts(content, title, user_id, tags)
-	VALUES ($1, $2, $3, $4)
+	INSERT INTO posts(content, title, user_id, tags) VALUES ($1, $2, $3, $4) 
 	RETURNING id, content, title, user_id, tags, created_at, updated_at, version
 	`
 
@@ -68,18 +62,10 @@ func (repository *postRepository) Create(
 	)
 
 	if err != nil {
-		repository.logger.Error("Failed to create post", map[string]any{
-			"user_id": post.UserId,
-			"error":   err,
-		})
+		repository.logger.Error("failed to create post", map[string]any{"user_id": post.UserId, "error": err})
 
 		return nil, fmt.Errorf("create post error: %w", err)
 	}
-
-	repository.logger.Info("Post created successfully", map[string]any{
-		"post_id": result.ID,
-		"user_id": result.UserId,
-	})
 
 	return &result, nil
 }
@@ -90,10 +76,6 @@ func (repository *postRepository) GetById(
 ) (*entity.Post, error) {
 	ctx, cancel := context.WithTimeout(ctx, config.QueryTimeoutDuration)
 	defer cancel()
-
-	repository.logger.Info("Getting post by ID", map[string]any{
-		"post_id": postId,
-	})
 
 	query := `
 	SELECT id, user_id, title, content, tags, version, created_at, updated_at
@@ -117,25 +99,17 @@ func (repository *postRepository) GetById(
 
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			repository.logger.Warn("Post not found", map[string]any{
-				"post_id": postId,
-			})
+			repository.logger.Warn("Post not found", "postId", postId)
 
 			return nil, domain.ErrNotFound
 		}
 
-		repository.logger.Error("Failed to get post", map[string]any{
-			"post_id": postId,
-			"error":   err,
-		})
+		repository.logger.Error("Failed to get post", map[string]any{"post_id": postId, "error": err})
 
 		return nil, fmt.Errorf("get post: %w", err)
 	}
 
-	repository.logger.Info("Post retrieved successfully", map[string]any{
-		"post_id": post.ID,
-		"user_id": post.UserId,
-	})
+	repository.logger.Info("Post retrieved successfully", map[string]any{"postId": post.ID, "userId": post.UserId})
 
 	return &post, nil
 }
@@ -147,45 +121,30 @@ func (repository *postRepository) Delete(
 	ctx, cancel := context.WithTimeout(ctx, config.QueryTimeoutDuration)
 	defer cancel()
 
-	repository.logger.Info("Deleting post", map[string]any{
-		"post_id": postID,
-	})
-
 	res, err := repository.db.ExecContext(
 		ctx,
 		`DELETE FROM posts WHERE id = $1`,
 		postID,
 	)
 	if err != nil {
-		repository.logger.Error("Failed to delete post", map[string]any{
-			"post_id": postID,
-			"error":   err,
-		})
+		repository.logger.Error("Failed to delete post", map[string]any{"postId": postID, "error": err})
 
 		return fmt.Errorf("delete post: %w", err)
 	}
 
 	rowsAffected, err := res.RowsAffected()
 	if err != nil {
-		repository.logger.Error("Failed to get affected rows", map[string]any{
-			"post_id": postID,
-			"error":   err,
-		})
+		repository.logger.Error("Failed to get affected rows", map[string]any{"postId": postID, "error": err})
 
 		return fmt.Errorf("rows affected: %w", err)
 	}
 
 	if rowsAffected == 0 {
-		repository.logger.Warn("Post not found for deletion", map[string]any{
-			"post_id": postID,
-		})
-
+		repository.logger.Warn("Post not found for deletion", "postId", postID)
 		return domain.ErrNotFound
 	}
 
-	repository.logger.Info("Post deleted successfully", map[string]any{
-		"post_id": postID,
-	})
+	repository.logger.Info("Post deleted successfully", "postId", postID)
 
 	return nil
 }
@@ -198,28 +157,15 @@ func (repository *postRepository) Update(
 	ctx, cancel := context.WithTimeout(ctx, config.QueryTimeoutDuration)
 	defer cancel()
 
-	repository.logger.Info("Updating post", map[string]any{
-		"post_id": postId,
-		"version": post.Version,
-		"title":   post.Title,
-	})
-
 	tx, err := repository.db.BeginTx(ctx, nil)
 	if err != nil {
-		repository.logger.Error("Failed to begin update transaction", map[string]any{
-			"post_id": postId,
-			"error":   err,
-		})
-
+		repository.logger.Error("Failed to begin update transaction", "postId", postId, "error", err)
 		return nil, fmt.Errorf("begin transaction error: %w", err)
 	}
 
 	defer func() {
 		if err := tx.Rollback(); err != nil && !errors.Is(err, sql.ErrTxDone) {
-			repository.logger.Error("Failed to rollback transaction", map[string]any{
-				"post_id": postId,
-				"error":   err,
-			})
+			repository.logger.Error("Failed to rollback transaction", "postId", postId, "error", err)
 		}
 	}()
 
@@ -261,52 +207,38 @@ func (repository *postRepository) Update(
 			).Scan(&exists)
 
 			if err != nil {
-				repository.logger.Error("Failed to check post existence", map[string]any{
-					"post_id": postId,
-					"error":   err,
-				})
+				repository.logger.Error("Failed to check post existence", "postId", postId, "error", err)
 
 				return nil, fmt.Errorf("check post existence: %w", err)
 			}
 
 			if !exists {
-				repository.logger.Warn("Post not found for update", map[string]any{
-					"post_id": postId,
-				})
+				repository.logger.Warn("Post not found for update", "postId", postId, "error", err)
 
 				return nil, domain.ErrNotFound
 			}
 
-			repository.logger.Warn("Post version conflict", map[string]any{
-				"post_id":       postId,
-				"requested_ver": post.Version,
-			})
+			repository.logger.Warn("Post version conflict", "postId", postId, "requestedVer", post.Version)
 
 			return nil, domain.ErrVersionConflict
 		}
 
-		repository.logger.Error("Failed to update post", map[string]any{
-			"post_id": postId,
-			"error":   err,
-		})
+		repository.logger.Error("Failed to update post", "postId", postId, "error", err)
 
 		return nil, fmt.Errorf("update post: %w", err)
 	}
 
 	if err := tx.Commit(); err != nil {
-		repository.logger.Error("Failed to commit post update", map[string]any{
-			"post_id": postId,
-			"error":   err,
-		})
+		repository.logger.Error("Failed to commit post update", "postId", postId, "error", err)
 
 		return nil, fmt.Errorf("commit transaction: %w", err)
 	}
 
 	repository.logger.Info("Post updated successfully", map[string]any{
-		"post_id":     updatedPost.ID,
-		"user_id":     updatedPost.UserId,
-		"old_version": post.Version,
-		"new_version": updatedPost.Version,
+		"postId":     updatedPost.ID,
+		"userId":     updatedPost.UserId,
+		"oldVersion": post.Version,
+		"newVersion": updatedPost.Version,
 	})
 
 	return &updatedPost, nil
@@ -366,10 +298,7 @@ func (repository *postRepository) GetFeed(
 	defer func(rows *sql.Rows) {
 		err := rows.Close()
 		if err != nil {
-			repository.logger.Error(
-				"failed to close posts rows",
-				"error", err,
-			)
+			repository.logger.Error("failed to close posts rows", "error", err)
 		}
 	}(rows)
 

@@ -67,12 +67,20 @@ func ResponseValidationError(w http.ResponseWriter, r *http.Request, err map[str
 	_ = ResponseJSONError(w, http.StatusBadRequest, err)
 }
 
+func Unauthorized(w http.ResponseWriter, r *http.Request, err error) {
+	_ = ResponseJSONError(w, http.StatusUnauthorized, err.Error())
+}
+
 func HandleServiceError(w http.ResponseWriter, r *http.Request, err error) {
 	switch {
 	case errors.Is(err, domain.ErrNotFound):
 		NotFoundError(w, r, err)
-	case errors.Is(err, domain.ErrVersionConflict):
+
+	case errors.Is(err, domain.ErrVersionConflict),
+		errors.Is(err, domain.ErrUsernameAlreadyExists),
+		errors.Is(err, domain.ErrEmailAlreadyExists):
 		ConflictError(w, r, err)
+
 	default:
 		InternalServerError(w, r, err)
 	}

@@ -32,11 +32,6 @@ func (repository *commentRepository) GetByPostId(
 	ctx, cancel := context.WithTimeout(ctx, config.QueryTimeoutDuration)
 	defer cancel()
 
-	repository.logger.Info(
-		"Getting comments by post ID",
-		"postID", postId,
-	)
-
 	query := `
 		SELECT c.id, c.post_id, c.user_id, c.content, c.created_at, u.username, u.id
 		FROM comments c JOIN users u ON c.user_id = u.id
@@ -46,21 +41,13 @@ func (repository *commentRepository) GetByPostId(
 
 	rows, err := repository.db.QueryContext(ctx, query, postId)
 	if err != nil {
-		repository.logger.Error(
-			"Failed to get comments by post ID",
-			"postID", postId,
-			"error", err,
-		)
+		repository.logger.Error("Failed to get comments by post ID", "postID", postId, "error", err)
 		return nil, err
 	}
 
 	defer func() {
 		if err := rows.Close(); err != nil {
-			repository.logger.Error(
-				"Failed to close comment rows",
-				"postID", postId,
-				"error", err,
-			)
+			repository.logger.Error("Failed to close comment rows", "postID", postId, "error", err)
 		}
 	}()
 
@@ -81,11 +68,7 @@ func (repository *commentRepository) GetByPostId(
 		)
 
 		if err != nil {
-			repository.logger.Error(
-				"Failed to scan comment",
-				"postID", postId,
-				"error", err,
-			)
+			repository.logger.Error("Failed to scan comment", "postID", postId, "error", err)
 			return nil, err
 		}
 
@@ -93,19 +76,9 @@ func (repository *commentRepository) GetByPostId(
 	}
 
 	if err := rows.Err(); err != nil {
-		repository.logger.Error(
-			"Error while iterating comments",
-			"postID", postId,
-			"error", err,
-		)
+		repository.logger.Error("error while iterating comments", "postID", postId, "error", err)
 		return nil, err
 	}
-
-	repository.logger.Info(
-		"Successfully retrieved comments",
-		"postID", postId,
-		"count", len(comments),
-	)
 
 	return comments, nil
 }
