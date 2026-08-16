@@ -5,7 +5,7 @@ import (
 
 	"github.com/gamee1910/social/internal/domain/service"
 	"github.com/gamee1910/social/internal/interfaces/http/transport/request"
-	"github.com/gamee1910/social/internal/utils"
+	"github.com/gamee1910/social/pkg/utils"
 )
 
 type AuthHandler struct {

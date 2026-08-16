@@ -7,7 +7,7 @@ import (
 	"github.com/gamee1910/social/internal/config"
 	"github.com/gamee1910/social/internal/infrastructure/di"
 	"github.com/gamee1910/social/internal/interfaces/http/middleware"
-	"github.com/gamee1910/social/internal/utils"
+	"github.com/gamee1910/social/pkg/utils"
 	"github.com/gamee1910/social/pkg/logger"
 	"github.com/go-chi/chi/v5"
 	chiMiddlware "github.com/go-chi/chi/v5/middleware"

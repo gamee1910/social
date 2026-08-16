@@ -8,7 +8,7 @@ import (
 	"github.com/gamee1910/social/internal/interfaces/http/middleware"
 	"github.com/gamee1910/social/internal/interfaces/http/transport/request"
 
-	"github.com/gamee1910/social/internal/utils"
+	"github.com/gamee1910/social/pkg/utils"
 	"github.com/gamee1910/social/pkg/logger"
 )
 

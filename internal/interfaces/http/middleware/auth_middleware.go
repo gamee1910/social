@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/gamee1910/social/internal/config"
-	"github.com/gamee1910/social/internal/utils"
+	"github.com/gamee1910/social/pkg/utils"
 	"github.com/gamee1910/social/pkg/jwt"
 )
 
