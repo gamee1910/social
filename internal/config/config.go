@@ -11,12 +11,18 @@ type Configuration struct {
 	Application ApplicationConfig
 	Server      ServerConfig
 	Database    DatabaseConfig
+	JWT         JWTConfig
 }
 
 type ApplicationConfig struct {
 	Name        string
 	Env         string
 	FrontendURL string
+}
+
+type JWTConfig struct {
+	SecretKey string
+	Expiry    time.Duration
 }
 
 type ServerConfig struct {
@@ -72,6 +78,10 @@ func Load() *Configuration {
 			MaxOpenConnections: GetEnvInt("DB_MAX_OPEN_CONNECTIONS", 10),
 			MaxIdleConnections: GetEnvInt("DB_MAX_IDLE_CONNECTIONS", 10),
 			MaxIdleTime:        GetEnvDuration("DB_MAX_IDLE_TIME", 15*time.Minute),
+		},
+		JWT: JWTConfig{
+			SecretKey: GetEnv("JWT_SECRET_KEY", "change-me-in-production"),
+			Expiry:    GetEnvDuration("JWT_EXPIRY", 24*time.Hour),
 		},
 	}
 

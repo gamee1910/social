@@ -38,17 +38,10 @@ func (repository *userRepository) Create(ctx context.Context, user *entity.User)
 
 	var result entity.User
 
-	err := repository.db.QueryRowContext(
-		ctx,
-		query,
-		user.Username,
-		user.Email,
-		user.Password,
+	err := repository.db.QueryRowContext(ctx, query,
+		user.Username, user.Email, user.Password,
 	).Scan(
-		&result.ID,
-		&result.Username,
-		&result.Email,
-		&result.CreatedAt,
+		&result.ID, &result.Username, &result.Email, &result.CreatedAt,
 	)
 
 	if err != nil {
@@ -81,14 +74,8 @@ func (repository *userRepository) GetById(ctx context.Context, userID int64) (*e
 
 	var user entity.User
 
-	err := repository.db.QueryRowContext(
-		ctx,
-		query,
-		userID,
-	).Scan(
-		&user.ID,
-		&user.Username,
-		&user.Email,
+	err := repository.db.QueryRowContext(ctx, query, userID).Scan(
+		&user.ID, &user.Username, &user.Email,
 	)
 
 	if err != nil {
@@ -114,16 +101,8 @@ func (repository *userRepository) GetUserByEmail(ctx context.Context, email stri
 
 	var result entity.User
 
-	err := repository.db.QueryRowContext(
-		ctx,
-		query,
-		email,
-	).Scan(
-		&result.ID,
-		&result.Username,
-		&result.Email,
-		&result.Password,
-		&result.CreatedAt,
+	err := repository.db.QueryRowContext(ctx, query, email).Scan(
+		&result.ID, &result.Username, &result.Email, &result.Password, &result.CreatedAt,
 	)
 
 	if err != nil {

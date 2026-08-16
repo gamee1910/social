@@ -22,6 +22,7 @@ type Container struct {
 	userHandler     *handler.UserHandler
 	commentHandler  *handler.CommentHandler
 	followerHandler *handler.FollowerHandler
+	authHandler     *handler.AuthHandler
 }
 
 func (c *Container) PostHandler() *handler.PostHandler {
@@ -38,6 +39,10 @@ func (c *Container) CommentHandler() *handler.CommentHandler {
 
 func (c *Container) FollowerHandler() *handler.FollowerHandler {
 	return c.followerHandler
+}
+
+func (c *Container) AuthHandler() *handler.AuthHandler {
+	return c.authHandler
 }
 
 func NewContainer(cfg *config.Configuration, db *sql.DB, logger *logger.Logger) *Container {
@@ -59,6 +64,7 @@ func (c *Container) initializeHandlers() {
 	c.userHandler = handler.NewUserHandler(services.userService, c.logger)
 	c.commentHandler = handler.NewCommentHandler(services.commentService, c.logger)
 	c.followerHandler = handler.NewFollowerHandler(services.followerService)
+	c.authHandler = handler.NewAuthHandler(services.authService)
 }
 
 type repositories struct {
@@ -82,6 +88,7 @@ type services struct {
 	postService     service.PostService
 	commentService  service.CommentService
 	followerService service.FollowService
+	authService     service.AuthService
 }
 
 func (c *Container) initServices(r repositories) services {
@@ -90,5 +97,6 @@ func (c *Container) initServices(r repositories) services {
 		postService:     application.NewPostService(r.postRepository, r.commentRepository, c.logger),
 		commentService:  application.NewCommentService(r.commentRepository, c.logger),
 		followerService: application.NewFollowerService(r.followerRepository, c.logger),
+		authService:     application.NewAuthService(r.userRepository, c.cfg.JWT),
 	}
 }

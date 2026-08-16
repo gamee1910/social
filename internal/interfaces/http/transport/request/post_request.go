@@ -15,6 +15,7 @@ const (
 )
 
 type CreatePostRequest struct {
+	UserID  int64    `json:"-"`
 	Title   string   `json:"title" validate:"required,max=200"`
 	Content string   `json:"content" validate:"required,max=1000"`
 	Tags    []string `json:"tags"`

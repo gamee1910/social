@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/gamee1910/social/internal/domain/service"
+	"github.com/gamee1910/social/internal/interfaces/http/middleware"
 	"github.com/gamee1910/social/internal/interfaces/http/transport/request"
 
 	"github.com/gamee1910/social/internal/utils"
@@ -47,6 +48,9 @@ func (h *PostHandler) CreatePostHandler(w http.ResponseWriter, r *http.Request) 
 		utils.BadRequestError(w, r, err)
 		return
 	}
+
+	claims := middleware.GetUserClaims(r)
+	req.UserID = claims.UserID
 
 	if err := utils.Validate.Struct(req); err != nil {
 		utils.ResponseValidationError(w, r, utils.FormatValidationErrors(err))
@@ -201,8 +205,7 @@ func (h *PostHandler) GetFeed(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	//TODO: userID := getUserIDFromContext(r.Context())
-	userID := int64(1)
+	userID := middleware.GetUserClaims(r).UserID
 
 	posts, err := h.postService.GetFeed(r.Context(), service.GetFeedInput{
 		UserID: userID,

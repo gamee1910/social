@@ -78,7 +78,8 @@ func HandleServiceError(w http.ResponseWriter, r *http.Request, err error) {
 
 	case errors.Is(err, domain.ErrVersionConflict),
 		errors.Is(err, domain.ErrUsernameAlreadyExists),
-		errors.Is(err, domain.ErrEmailAlreadyExists):
+		errors.Is(err, domain.ErrEmailAlreadyExists),
+		errors.Is(err, domain.ErrUnauthorized):
 		ConflictError(w, r, err)
 
 	default:

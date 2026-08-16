@@ -6,10 +6,11 @@ import (
 
 	"github.com/gamee1910/social/internal/config"
 	"github.com/gamee1910/social/internal/infrastructure/di"
+	"github.com/gamee1910/social/internal/interfaces/http/middleware"
 	"github.com/gamee1910/social/internal/utils"
 	"github.com/gamee1910/social/pkg/logger"
 	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
+	chiMiddlware "github.com/go-chi/chi/v5/middleware"
 	httpSwagger "github.com/swaggo/http-swagger"
 )
 
@@ -21,8 +22,8 @@ type RouterDependencies struct {
 
 func SetupRouter(cfg *config.Configuration, db *sql.DB, container *di.Container, logger *logger.Logger) *chi.Mux {
 	r := chi.NewRouter()
-	r.Use(middleware.Recoverer)
-	r.Use(middleware.Logger)
+	r.Use(chiMiddlware.Recoverer)
+	r.Use(chiMiddlware.Logger)
 
 	r.Get("/swagger/*", httpSwagger.Handler(
 		httpSwagger.URL("/swagger/doc.json"),
@@ -50,10 +51,16 @@ func SetupRouter(cfg *config.Configuration, db *sql.DB, container *di.Container,
 	}
 
 	r.Route("/api/v1", func(r chi.Router) {
-		RegisterPostRoutes(r, deps)
-		RegisterUserRoutes(r, deps)
-		RegisterCommentRoutes(r, deps)
-		RegisterFollowRoutes(r, deps)
+		RegisterAuthRoutes(r, deps)
+
+		r.Group(func(r chi.Router) {
+			r.Use(middleware.JWTAuth(cfg.JWT))
+			RegisterPostRoutes(r, deps)
+			RegisterUserRoutes(r, deps)
+			RegisterCommentRoutes(r, deps)
+			RegisterFollowRoutes(r, deps)
+		})
+
 	})
 
 	return r

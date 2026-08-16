@@ -32,7 +32,7 @@ func (postService *postService) Create(ctx context.Context, postRequest request.
 		Title:   postRequest.Title,
 		Content: postRequest.Content,
 		Tags:    postRequest.Tags,
-		UserId:  1, // TODO: get from auth context
+		UserId:  postRequest.UserID, // lấy từ JWT claims qua handler
 	}
 
 	post, err := postService.postRepository.Create(ctx, req)
