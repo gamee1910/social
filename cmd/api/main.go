@@ -26,7 +26,11 @@ import (
 func main() {
 	cfg := config.Load()
 	log := logger.NewLogger(cfg.Application.Env)
-	defer log.Sync()
+	defer func(log *logger.Logger) {
+		if err := log.Sync(); err != nil {
+			log.Error("failed to sync logger", "error", err)
+		}
+	}(log)
 
 	db, err := config.DatabaseConnection(cfg)
 	if err != nil {

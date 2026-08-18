@@ -41,13 +41,8 @@ Official documentation:
 
 https://direnv.net/docs/installation.html
 
-**macOS**
 
-```bash
-brew install direnv
-```
-
-**Ubuntu / Debian**
+**Debian**
 
 ```bash
 sudo apt install direnv
@@ -225,20 +220,11 @@ make migrate-force version=3
 
 Replace `3` with the migration version you want to force.
 
----
 
-## Development
+## API Swagger Documentation
 
-Run the development server with hot reload:
-
-```bash
-make watch
-```
-
-Or without hot reload:
+To generate Swagger API documentation for the Go application, first make sure all API endpoints are properly annotated with Swagger comments.
 
 ```bash
-make run
+make gen-docs
 ```
-
-The server will automatically reload whenever source files change when using `make watch`.
