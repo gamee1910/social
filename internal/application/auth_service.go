@@ -9,8 +9,8 @@ import (
 	"github.com/gamee1910/social/internal/domain/entity"
 	"github.com/gamee1910/social/internal/domain/repository"
 	"github.com/gamee1910/social/internal/domain/service"
-	"github.com/gamee1910/social/internal/interfaces/http/transport/request"
-	"github.com/gamee1910/social/internal/interfaces/http/transport/response"
+	"github.com/gamee1910/social/internal/interfaces/http/handler/request"
+	"github.com/gamee1910/social/internal/interfaces/http/handler/response"
 	"github.com/gamee1910/social/pkg/jwt"
 	"golang.org/x/crypto/bcrypt"
 )

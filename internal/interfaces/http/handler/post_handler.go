@@ -5,11 +5,11 @@ import (
 	"net/http"
 
 	"github.com/gamee1910/social/internal/domain/service"
+	"github.com/gamee1910/social/internal/interfaces/http/handler/request"
 	"github.com/gamee1910/social/internal/interfaces/http/middleware"
-	"github.com/gamee1910/social/internal/interfaces/http/transport/request"
 
-	"github.com/gamee1910/social/pkg/utils"
 	"github.com/gamee1910/social/pkg/logger"
+	"github.com/gamee1910/social/pkg/utils"
 )
 
 type PostHandler struct {

@@ -3,8 +3,8 @@ package service
 import (
 	"context"
 
-	"github.com/gamee1910/social/internal/interfaces/http/transport/request"
-	"github.com/gamee1910/social/internal/interfaces/http/transport/response"
+	"github.com/gamee1910/social/internal/interfaces/http/handler/request"
+	"github.com/gamee1910/social/internal/interfaces/http/handler/response"
 )
 
 type GetFeedInput struct {
